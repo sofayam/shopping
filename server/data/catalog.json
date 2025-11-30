@@ -1,0 +1,32 @@
+[
+  {
+    "id": "0",
+    "name": "Milk",
+    "nicknames": [
+      "moo juice"
+    ],
+    "type": "dairy"
+  },
+  {
+    "id": "1",
+    "name": "Bread",
+    "nicknames": [
+      "loaf"
+    ],
+    "type": "bakery"
+  },
+  {
+    "id": "2",
+    "name": "Cheese",
+    "nicknames": [],
+    "type": "dairy"
+  },
+  {
+    "name": "loo paper",
+    "nicknames": [
+      "bog roll"
+    ],
+    "type": "household",
+    "id": "1764522465959"
+  }
+]
