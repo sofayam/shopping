@@ -5,7 +5,15 @@
     "nicknames": [
       "moo juice"
     ],
-    "type": "dairy"
+    "type": "dairy",
+    "purchased": false
+  },
+  {
+    "id": "2",
+    "name": "Cheese",
+    "nicknames": [],
+    "type": "dairy",
+    "purchased": true
   },
   {
     "id": "1",
@@ -13,13 +21,8 @@
     "nicknames": [
       "loaf"
     ],
-    "type": "bakery"
-  },
-  {
-    "id": "2",
-    "name": "Cheese",
-    "nicknames": [],
-    "type": "dairy"
+    "type": "bakery",
+    "purchased": false
   },
   {
     "name": "loo paper",
@@ -27,7 +30,8 @@
       "bog roll"
     ],
     "type": "household",
-    "id": "1764522465959"
+    "id": "1764522465959",
+    "purchased": true
   },
   {
     "name": "bulgur",
@@ -35,6 +39,7 @@
       "triguero"
     ],
     "type": "dry",
-    "id": "1764537032657"
+    "id": "1764537032657",
+    "purchased": false
   }
 ]

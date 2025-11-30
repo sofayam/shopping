@@ -1,13 +1,17 @@
 import React from 'react';
-import { ListGroup, Button, Form } from 'react-bootstrap';
+import { ListGroup, Button, Form, Card } from 'react-bootstrap';
 import AddItemForm from './AddItemForm';
 
-const ShoppingList = ({ list, catalog, onToggle, onDelete, onAdd }) => {
+const ShoppingList = ({ list, catalog, onToggle, onDelete, onAdd, onArchive }) => {
   return (
     <>
       <h2 className="mb-3">Shopping List</h2>
       
-      <AddItemForm catalog={catalog} onAdd={onAdd} />
+      <Card className="mb-4">
+        <Card.Body>
+          <AddItemForm catalog={catalog} onAdd={onAdd} />
+        </Card.Body>
+      </Card>
 
       <ListGroup>
         {list.length === 0 && <ListGroup.Item>Your shopping list is empty.</ListGroup.Item>}
@@ -28,6 +32,14 @@ const ShoppingList = ({ list, catalog, onToggle, onDelete, onAdd }) => {
           </ListGroup.Item>
         ))}
       </ListGroup>
+
+      {list.length > 0 && (
+        <div className="mt-4">
+          <Button variant="info" onClick={onArchive}>
+            Archive and Start New List
+          </Button>
+        </div>
+      )}
     </>
   );
 };

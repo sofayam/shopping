@@ -38,7 +38,6 @@ function App() {
 
   const handleViewChange = (newView) => {
     setView(newView);
-    fetchData(); // Refresh data when switching views
   }
 
   // --- Shopping List Handlers ---
@@ -69,6 +68,16 @@ function App() {
     } catch (err) {
       console.error("Failed to update item status", err);
       setError('Failed to update item. Please try again.');
+    }
+  };
+
+  const handleArchiveAndCreateNewList = async () => {
+    try {
+      const res = await axios.post('/api/shopping-list/archive');
+      setShoppingList(res.data.newList);
+    } catch (err) {
+      console.error("Failed to archive list", err);
+      setError('Failed to archive the shopping list. Please try again.');
     }
   };
 
@@ -112,6 +121,7 @@ function App() {
             onToggle={handleToggleItemPurchased}
             onDelete={handleDeleteItemFromShoppingList}
             onAdd={handleAddItemToShoppingList}
+            onArchive={handleArchiveAndCreateNewList}
           />
         ) : (
           <CatalogManagement 

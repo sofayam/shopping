@@ -143,6 +143,29 @@ app.delete('/api/shopping-list/:id', async (req, res) => {
     }
 });
 
+app.post('/api/shopping-list/archive', async (req, res) => {
+    try {
+        const now = new Date();
+        const datePart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const timePart = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+        const timestamp = `${datePart}_${timePart}`;
+        
+        const archiveFileName = `shopping_list_${timestamp}.json`;
+        const ARCHIVE_PATH = path.join(__dirname, 'data', archiveFileName);
+
+        // Rename current list to an archive file
+        await fs.rename(SHOPPING_LIST_PATH, ARCHIVE_PATH);
+
+        // Create a new empty shopping list
+        await writeFile(SHOPPING_LIST_PATH, []);
+
+        res.status(200).json({ message: 'Shopping list archived and new list created.', newList: [] });
+    } catch (error) {
+        console.error('Error archiving shopping list:', error);
+        res.status(500).json({ message: 'Failed to archive shopping list.' });
+    }
+});
+
 // The "catchall" handler: for any request that doesn't
 // match one of the API routes above, send back React's index.html file.
 app.get('/*', (req, res) => {
