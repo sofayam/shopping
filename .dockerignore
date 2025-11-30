@@ -1,0 +1,22 @@
+# Git and OS files
+.git
+.DS_Store
+
+# Node dependencies
+node_modules
+server/node_modules
+client/node_modules
+
+# Build artifacts
+client/build
+
+# Local config
+.env
+
+# Documentation
+*.md
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore

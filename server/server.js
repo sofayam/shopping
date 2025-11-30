@@ -12,6 +12,10 @@ const SHOPPING_LIST_PATH = path.join(__dirname, 'data', 'shopping_list.json');
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the React build directory
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+
 // --- Helper Functions ---
 const readFile = async (filePath) => {
     try {
@@ -137,6 +141,12 @@ app.delete('/api/shopping-list/:id', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+});
+
+// The "catchall" handler: for any request that doesn't
+// match one of the API routes above, send back React's index.html file.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 
