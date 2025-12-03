@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "name": "bulgur",
+    "nicknames": [
+      "triguero"
+    ],
+    "type": "dry",
+    "id": "1764537032657",
+    "purchased": false
+  },
+  {
+    "id": "1",
+    "name": "Bread",
+    "nicknames": [
+      "loaf"
+    ],
+    "type": "bakery",
+    "purchased": false
+  },
+  {
+    "id": "0",
+    "name": "Milk",
+    "nicknames": [
+      "moo juice"
+    ],
+    "type": "dairy",
+    "purchased": false
+  },
+  {
+    "name": "Cheese",
+    "nicknames": [],
+    "type": "dairy",
+    "shops": [
+      "Waitrose"
+    ],
+    "purchased": false
+  }
+]

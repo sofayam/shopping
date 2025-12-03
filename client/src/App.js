@@ -12,20 +12,23 @@ function App() {
   const [shoppingList, setShoppingList] = useState([]);
   const [catalog, setCatalog] = useState([]);
   const [itemTypes, setItemTypes] = useState([]);
+  const [shops, setShops] = useState([]);
   const [view, setView] = useState('shopping'); // 'shopping' or 'catalog'
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
     try {
       setError(null);
-      const [catalogRes, shoppingListRes, itemTypesRes] = await Promise.all([
+      const [catalogRes, shoppingListRes, itemTypesRes, shopsRes] = await Promise.all([
         axios.get('/api/catalog'),
         axios.get('/api/shopping-list'),
         axios.get('/api/item-types'),
+        axios.get('/api/shops'),
       ]);
       setCatalog(catalogRes.data);
       setShoppingList(shoppingListRes.data);
       setItemTypes(itemTypesRes.data);
+      setShops(shopsRes.data);
     } catch (err) {
       setError('Failed to fetch data from the server. Is it running?');
       console.error(err);
@@ -41,9 +44,9 @@ function App() {
   }
 
   // --- Shopping List Handlers ---
-  const handleAddItemToShoppingList = async (itemId) => {
+  const handleAddItemToShoppingList = async (itemName) => {
     try {
-      const res = await axios.post('/api/shopping-list', { itemId });
+      const res = await axios.post('/api/shopping-list', { itemName });
       setShoppingList([...shoppingList, res.data]);
     } catch (err) {
       console.error("Failed to add item to shopping list", err);
@@ -51,20 +54,20 @@ function App() {
     }
   };
 
-  const handleDeleteItemFromShoppingList = async (itemId) => {
+  const handleDeleteItemFromShoppingList = async (itemName) => {
     try {
-      await axios.delete(`/api/shopping-list/${itemId}`);
-      setShoppingList(shoppingList.filter(item => item.id !== itemId));
+      await axios.delete(`/api/shopping-list/${encodeURIComponent(itemName)}`);
+      setShoppingList(shoppingList.filter(item => item.name !== itemName));
     } catch (err) {
       console.error("Failed to delete item from shopping list", err);
       setError('Failed to delete item. Please try again.');
     }
   };
 
-  const handleToggleItemPurchased = async (itemId, purchased) => {
+  const handleToggleItemPurchased = async (itemName, purchased) => {
     try {
-      const res = await axios.put(`/api/shopping-list/${itemId}`, { purchased });
-      setShoppingList(shoppingList.map(item => item.id === itemId ? res.data : item));
+      const res = await axios.put(`/api/shopping-list/${encodeURIComponent(itemName)}`, { purchased });
+      setShoppingList(shoppingList.map(item => item.name === itemName ? res.data : item));
     } catch (err) {
       console.error("Failed to update item status", err);
       setError('Failed to update item. Please try again.');
@@ -78,6 +81,16 @@ function App() {
     } catch (err) {
       console.error("Failed to archive list", err);
       setError('Failed to archive the shopping list. Please try again.');
+    }
+  };
+
+  const handleRemovePurchasedItems = async () => {
+    try {
+      const res = await axios.post('/api/shopping-list/remove-purchased');
+      setShoppingList(res.data);
+    } catch (err) {
+      console.error("Failed to remove purchased items", err);
+      setError('Failed to remove purchased items. Please try again.');
     }
   };
 
@@ -122,6 +135,8 @@ function App() {
             onDelete={handleDeleteItemFromShoppingList}
             onAdd={handleAddItemToShoppingList}
             onArchive={handleArchiveAndCreateNewList}
+            onRemovePurchased={handleRemovePurchasedItems}
+            shops={shops}
           />
         ) : (
           <CatalogManagement 

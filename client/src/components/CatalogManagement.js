@@ -5,6 +5,7 @@ const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
   const [name, setName] = useState('');
   const [nicknames, setNicknames] = useState('');
   const [type, setType] = useState('');
+  const [shops, setShops] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -13,10 +14,12 @@ const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
       return;
     }
     const newNicknames = nicknames.split(',').map(n => n.trim()).filter(Boolean);
-    onAdd({ name, nicknames: newNicknames, type });
+    const newShops = shops.split(',').map(s => s.trim()).filter(Boolean);
+    onAdd({ name, nicknames: newNicknames, type, shops: newShops });
     setName('');
     setNicknames('');
     setType('');
+    setShops('');
   };
 
   return (
@@ -28,25 +31,31 @@ const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
           <Card.Title>Add New Item</Card.Title>
           <Form onSubmit={handleSubmit}>
             <Row>
-              <Col md={4}>
+              <Col md={3}>
                 <Form.Group className="mb-3">
                   <Form.Label>Item Name</Form.Label>
                   <Form.Control type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Milk" required />
                 </Form.Group>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
                 <Form.Group className="mb-3">
                   <Form.Label>Nicknames (comma-separated)</Form.Label>
                   <Form.Control type="text" value={nicknames} onChange={e => setNicknames(e.target.value)} placeholder="e.g., moo juice, white stuff" />
                 </Form.Group>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
                 <Form.Group className="mb-3">
                   <Form.Label>Item Type</Form.Label>
                   <Form.Control list="item-types-datalist" type="text" value={type} onChange={e => setType(e.target.value)} placeholder="e.g., dairy" required />
                   <datalist id="item-types-datalist">
                     {itemTypes.map(t => <option key={t} value={t} />)}
                   </datalist>
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Shops (comma-separated)</Form.Label>
+                  <Form.Control type="text" value={shops} onChange={e => setShops(e.target.value)} placeholder="e.g., Tesco, Waitrose" />
                 </Form.Group>
               </Col>
             </Row>
@@ -61,6 +70,7 @@ const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
             <th>Name</th>
             <th>Nicknames</th>
             <th>Type</th>
+            <th>Shops</th>
           </tr>
         </thead>
         <tbody>
@@ -69,6 +79,7 @@ const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
               <td>{item.name}</td>
               <td>{item.nicknames.join(', ')}</td>
               <td>{item.type}</td>
+              <td>{(item.shops || []).join(', ')}</td>
             </tr>
           ))}
         </tbody>

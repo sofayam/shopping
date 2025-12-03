@@ -1,25 +1,25 @@
 [
   {
-    "id": "0",
     "name": "Milk",
     "nicknames": [
       "moo juice"
     ],
-    "type": "dairy"
+    "type": "dairy",
+    "shops": ["Tesco"]
   },
   {
-    "id": "1",
     "name": "Bread",
     "nicknames": [
       "loaf"
     ],
-    "type": "bakery"
+    "type": "bakery",
+    "shops": ["Tesco", "Waitrose"]
   },
   {
-    "id": "2",
     "name": "Cheese",
     "nicknames": [],
-    "type": "dairy"
+    "type": "dairy",
+    "shops": ["Waitrose"]
   },
   {
     "name": "loo paper",
@@ -27,7 +27,7 @@
       "bog roll"
     ],
     "type": "household",
-    "id": "1764522465959"
+    "shops": []
   },
   {
     "name": "bulgur",
@@ -35,6 +35,6 @@
       "triguero"
     ],
     "type": "dry",
-    "id": "1764537032657"
+    "shops": ["Tesco"]
   }
 ]

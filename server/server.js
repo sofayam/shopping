@@ -50,8 +50,6 @@ app.post('/api/catalog', async (req, res) => {
     try {
         const newItem = req.body;
         const catalog = await readFile(CATALOG_PATH);
-        
-        newItem.id = Date.now().toString(); // Simple unique ID
         catalog.push(newItem);
         
         await writeFile(CATALOG_PATH, catalog);
@@ -71,6 +69,16 @@ app.get('/api/item-types', async (req, res) => {
     }
 });
 
+app.get('/api/shops', async (req, res) => {
+    try {
+        const catalog = await readFile(CATALOG_PATH);
+        const shops = [...new Set(catalog.flatMap(item => item.shops || []))];
+        res.json(shops);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 // --- Shopping List API ---
 app.get('/api/shopping-list', async (req, res) => {
@@ -84,11 +92,11 @@ app.get('/api/shopping-list', async (req, res) => {
 
 app.post('/api/shopping-list', async (req, res) => {
     try {
-        const { itemId } = req.body;
+        const { itemName } = req.body;
         const catalog = await readFile(CATALOG_PATH);
         const shoppingList = await readFile(SHOPPING_LIST_PATH);
 
-        const itemToAdd = catalog.find(item => item.id === itemId);
+        const itemToAdd = catalog.find(item => item.name === itemName);
         if (!itemToAdd) {
             return res.status(404).json({ message: 'Item not found in catalog.' });
         }
@@ -104,13 +112,13 @@ app.post('/api/shopping-list', async (req, res) => {
     }
 });
 
-app.put('/api/shopping-list/:id', async (req, res) => {
+app.put('/api/shopping-list/:name', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { name } = req.params;
         const { purchased } = req.body;
         const shoppingList = await readFile(SHOPPING_LIST_PATH);
 
-        const itemIndex = shoppingList.findIndex(item => item.id === id);
+        const itemIndex = shoppingList.findIndex(item => item.name === decodeURIComponent(name));
         if (itemIndex === -1) {
             return res.status(404).json({ message: 'Item not found in shopping list.' });
         }
@@ -124,13 +132,13 @@ app.put('/api/shopping-list/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/shopping-list/:id', async (req, res) => {
+app.delete('/api/shopping-list/:name', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { name } = req.params;
         let shoppingList = await readFile(SHOPPING_LIST_PATH);
 
         const initialLength = shoppingList.length;
-        shoppingList = shoppingList.filter(item => item.id !== id);
+        shoppingList = shoppingList.filter(item => item.name !== decodeURIComponent(name));
 
         if (shoppingList.length === initialLength) {
             return res.status(404).json({ message: 'Item not found in shopping list.' });
@@ -163,6 +171,18 @@ app.post('/api/shopping-list/archive', async (req, res) => {
     } catch (error) {
         console.error('Error archiving shopping list:', error);
         res.status(500).json({ message: 'Failed to archive shopping list.' });
+    }
+});
+
+app.post('/api/shopping-list/remove-purchased', async (req, res) => {
+    try {
+        let shoppingList = await readFile(SHOPPING_LIST_PATH);
+        shoppingList = shoppingList.filter(item => !item.purchased);
+        await writeFile(SHOPPING_LIST_PATH, shoppingList);
+        res.status(200).json(shoppingList);
+    } catch (error) {
+        console.error('Error removing purchased items:', error);
+        res.status(500).json({ message: 'Failed to remove purchased items.' });
     }
 });
 

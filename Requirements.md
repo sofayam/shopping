@@ -9,6 +9,7 @@ It will have three main functions
  - a canonical name
  - one or more nicknames
  - an item type (e.g. veg, dairy, household, ..
+ - *NEW* optionally the name of the shop or shops in which this item can be bought
 - i want to be able to define new items with as many names as i see fit, and also define new item types (without a separate screen for defining types)
 
 
@@ -22,3 +23,8 @@ It will have three main functions
 3) Supporting the shopping process
  - display shopping list
  - set status of item (for ticking off the items while i am shopping)
+ - archive list and reset to empty
+ - *NEW* button to remove all ticked off items from the current list
+ - *NEW* dropdown to select a particular shop, and then not display items from the list which can only be bought in other shops
+ - *NEW* if no shop is selected display the complete list organised by shop. Items available from more than one shop are listed together with the first appropriate shop in the list
+ - *NEW* organize the list by type, per shop 

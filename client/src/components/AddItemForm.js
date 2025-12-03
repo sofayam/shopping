@@ -15,7 +15,7 @@ const AddItemForm = ({ catalog, onAdd }) => {
     );
 
     if (selectedItem) {
-      onAdd(selectedItem.id);
+      onAdd(selectedItem.name);
       setInputValue('');
     } else {
       alert(`Item "${inputValue}" not found in catalog.`);
@@ -37,11 +37,11 @@ const AddItemForm = ({ catalog, onAdd }) => {
             />
             <datalist id="catalog-items-datalist">
               {catalog.map(item => (
-                <option key={item.id} value={item.name} />
+                <option key={item.name} value={item.name} />
               ))}
               {/* Add nicknames to the datalist as well */}
               {catalog.flatMap(item => item.nicknames.map(nick => (
-                <option key={`${item.id}-${nick}`} value={nick} />
+                <option key={`${item.name}-${nick}`} value={nick} />
               ))).filter((value, index, self) => self.indexOf(value) === index)}
             </datalist>
           </Form.Group>
