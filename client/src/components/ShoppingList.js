@@ -7,19 +7,18 @@ const ShoppingList = ({ list, allShops, onRemove, onToggle, onRemoveTicked, onAr
   const filteredAndGroupedList = useMemo(() => {
     if (selectedShop === 'All Shops') {
       // --- Optimization Algorithm to Minimize Shops ---
-      const itemsToCover = new Set(list.map(item => item.listId));
+      const itemsToCover = new Set(list.map(item => item.listId)); // Still use listId for unique instances
       const fullItemList = list;
 
       // Create a map of which shops sell which items from the list
       const shopMap = {};
       fullItemList.forEach(item => {
-        // USE THE NEW `availableShops` PROPERTY
         const itemShops = item.availableShops && item.availableShops.length > 0 ? item.availableShops : ['Any Shop'];
         itemShops.forEach(shop => {
           if (!shopMap[shop]) {
             shopMap[shop] = [];
           }
-          shopMap[shop].push(item.listId);
+          shopMap[shop].push(item.listId); // Still use listId
         });
       });
 
@@ -31,7 +30,7 @@ const ShoppingList = ({ list, allShops, onRemove, onToggle, onRemoveTicked, onAr
 
         // Find the shop that covers the most REMAINING items
         for (const shop in shopMap) {
-          const coveredItems = shopMap[shop].filter(itemId => itemsToCover.has(itemId));
+          const coveredItems = shopMap[shop].filter(listItemId => itemsToCover.has(listItemId));
           if (coveredItems.length > maxCovered) {
             maxCovered = coveredItems.length;
             bestShop = shop;
@@ -44,7 +43,7 @@ const ShoppingList = ({ list, allShops, onRemove, onToggle, onRemoveTicked, onAr
         const itemsForShop = fullItemList.filter(item => itemsCoveredByBestShop.includes(item.listId));
         optimizedPlan[bestShop] = itemsForShop;
         
-        itemsCoveredByBestShop.forEach(itemId => itemsToCover.delete(itemId));
+        itemsCoveredByBestShop.forEach(listItemId => itemsToCover.delete(listItemId));
       }
       
       if (itemsToCover.size > 0) {
@@ -70,7 +69,6 @@ const ShoppingList = ({ list, allShops, onRemove, onToggle, onRemoveTicked, onAr
 
     } else {
       // --- Logic for Filtering by a Single Shop ---
-      // USE THE NEW `availableShops` PROPERTY
       const items = list.filter(item => item.availableShops && item.availableShops.includes(selectedShop));
       
       const grouped = items.reduce((acc, item) => {

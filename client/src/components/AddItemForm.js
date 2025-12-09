@@ -6,8 +6,8 @@ const AddItemForm = ({ catalog, onAddItem }) => {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const options = catalog.map(item => ({
-    value: item,
-    label: `${item.name} (${item.nicknames.join(', ')})`,
+    value: item, // Still pass the full item object
+    label: `${item.name} (${item.nicknames?.join(', ') || ''})`,
   }));
 
   const handleSubmit = (e) => {

@@ -12,6 +12,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const CATALOG_PATH = path.join(DATA_DIR, 'catalog.json');
 const SHOPPING_LIST_PATH = path.join(DATA_DIR, 'shopping_list.json');
 const SHOPS_PATH = path.join(DATA_DIR, 'shops.json');
+const SHOP_TYPES_PATH = path.join(DATA_DIR, 'shop_types.json');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -22,13 +23,11 @@ const readData = (filePath) => {
     const data = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    // If file doesn't exist or is invalid, start with an empty array.
     console.error(`Error reading file ${filePath}, returning empty array. Error:`, error);
     return [];
   }
 };
 
-// This function now throws an error on failure, allowing the caller to handle it.
 const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 };
@@ -47,11 +46,31 @@ const handleWrite = (res, filePath, data, successStatus = 200, successData) => {
 app.get('/api/integrity-check', (req, res) => {
     const catalog = readData(CATALOG_PATH);
     const shops = readData(SHOPS_PATH);
+    const shopTypes = readData(SHOP_TYPES_PATH);
     const shoppingList = readData(SHOPPING_LIST_PATH);
     
     const report = [];
 
-    // Check 1: Shops in catalog items must exist in the shops list
+    // Helper to check for duplicate names
+    const checkDuplicateNames = (items, fileName) => {
+        const seenNames = new Set();
+        items.forEach(item => {
+            if (seenNames.has(item.name)) {
+                report.push({
+                    level: 'error',
+                    message: `Data Integrity Error: Duplicate name "${item.name}" found in ${fileName}. Names must be unique.`
+                });
+            }
+            seenNames.add(item.name);
+        });
+    };
+
+    // Check 1: Duplicate names in Catalog, Shops, Shop Types
+    checkDuplicateNames(catalog, 'catalog.json');
+    checkDuplicateNames(shops, 'shops.json');
+    checkDuplicateNames(shopTypes, 'shop_types.json');
+    
+    // Check 2: Shops in catalog items must exist in the shops list
     const definedShopNames = new Set(shops.map(s => s.name));
     catalog.forEach(item => {
         if (item.shops && item.shops.length > 0) {
@@ -66,10 +85,21 @@ app.get('/api/integrity-check', (req, res) => {
         }
     });
 
-    // Check 2: Items in shopping list must exist in catalog
-    const catalogItemIds = new Set(catalog.map(i => i.id));
+    // Check 3: ShopTypeName in shops must exist in shop types list
+    const definedShopTypeNames = new Set(shopTypes.map(st => st.name));
+    shops.forEach(shop => {
+        if (!definedShopTypeNames.has(shop.shopTypeName)) {
+            report.push({
+                level: 'error',
+                message: `Data Integrity Error: Shop "${shop.name}" refers to a shop type "${shop.shopTypeName}" that is not defined.`
+            });
+        }
+    });
+
+    // Check 4: Items in shopping list must exist in catalog
+    const catalogItemNames = new Set(catalog.map(i => i.name));
     shoppingList.forEach(listItem => {
-        if (!catalogItemIds.has(listItem.id)) {
+        if (!catalogItemNames.has(listItem.name)) {
             report.push({
                 level: 'warning',
                 message: `Data Integrity Warning: Shopping list contains an item "${listItem.name}" that no longer exists in the catalog.`
@@ -77,22 +107,17 @@ app.get('/api/integrity-check', (req, res) => {
         }
     });
 
-    // Check 3: Duplicate ID checks
-    const checkDuplicates = (items, fileName, idField = 'id') => {
-        const seen = new Set();
-        items.forEach(item => {
-            if (seen.has(item[idField])) {
-                report.push({
-                    level: 'error',
-                    message: `Data Integrity Error: Duplicate ID "${item[idField]}" found in ${fileName}.`
-                });
-            }
-            seen.add(item[idField]);
-        });
-    };
-    checkDuplicates(catalog, 'catalog.json');
-    checkDuplicates(shops, 'shops.json');
-    checkDuplicates(shoppingList, 'shopping_list.json', 'listId');
+    // Check 5: Duplicate listId in shopping list (still using UUID for list instances)
+    const seenListIds = new Set();
+    shoppingList.forEach(listItem => {
+        if (seenListIds.has(listItem.listId)) {
+            report.push({
+                level: 'error',
+                message: `Data Integrity Error: Duplicate listId "${listItem.listId}" found in shopping_list.json.`
+            });
+        }
+        seenListIds.add(listItem.listId);
+    });
 
     res.json(report);
 });
@@ -106,77 +131,159 @@ app.get('/api/catalog', (req, res) => {
 
 app.post('/api/catalog', (req, res) => {
   const catalog = readData(CATALOG_PATH);
-  const newItem = { id: uuidv4(), ...req.body };
+  const { name, ...rest } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: 'Catalog item name is required.' });
+  }
+  if (catalog.some(item => item.name === name)) {
+    return res.status(409).json({ message: `Catalog item with name "${name}" already exists.` });
+  }
+  const newItem = { name, ...rest };
   catalog.push(newItem);
   handleWrite(res, CATALOG_PATH, catalog, 201, newItem);
 });
 
-app.put('/api/catalog/:id', (req, res) => {
-  const { id } = req.params;
+app.put('/api/catalog/:name', (req, res) => {
+  const { name } = req.params;
   const updatedItem = req.body;
   let catalog = readData(CATALOG_PATH);
   
-  const itemIndex = catalog.findIndex(item => item.id === id);
+  const itemIndex = catalog.findIndex(item => item.name === name);
 
   if (itemIndex !== -1) {
-    catalog[itemIndex] = { ...catalog[itemIndex], ...updatedItem };
+    // Ensure name is not changed if it's the identifier
+    if (updatedItem.name && updatedItem.name !== name) {
+        return res.status(400).json({ message: 'Cannot change the name of a catalog item directly via PUT. Delete and re-add if name change is desired.' });
+    }
+    catalog[itemIndex] = { ...catalog[itemIndex], ...updatedItem, name: name }; // Ensure name remains the identifier
     handleWrite(res, CATALOG_PATH, catalog, 200, catalog[itemIndex]);
   } else {
-    res.status(404).json({ message: 'Item not found' });
+    res.status(404).json({ message: 'Catalog item not found' });
   }
 });
 
-app.delete('/api/catalog/:id', (req, res) => {
-  const { id } = req.params;
+app.delete('/api/catalog/:name', (req, res) => {
+  const { name } = req.params;
   let catalog = readData(CATALOG_PATH);
   const initialLength = catalog.length;
-  catalog = catalog.filter(item => item.id !== id);
+  catalog = catalog.filter(item => item.name !== name);
 
   if (catalog.length < initialLength) {
-    handleWrite(res, CATALOG_PATH, catalog, 200, { message: 'Item deleted' });
+    handleWrite(res, CATALOG_PATH, catalog, 200, { message: 'Catalog item deleted' });
   } else {
-    res.status(404).json({ message: 'Item not found' });
+    res.status(404).json({ message: 'Catalog item not found' });
   }
 });
 
 // --- Shops API ---
 app.get('/api/shops', (req, res) => {
   const shops = readData(SHOPS_PATH);
-  res.json(shops);
+  const shopTypes = readData(SHOP_TYPES_PATH);
+  const shopTypesMap = new Map(shopTypes.map(st => [st.name, st])); // Map by name
+
+  const enrichedShops = shops.map(shop => {
+    const shopType = shopTypesMap.get(shop.shopTypeName);
+    return {
+      ...shop,
+      productTypes: shopType ? shopType.productTypes : []
+    };
+  });
+  res.json(enrichedShops);
 });
 
 app.post('/api/shops', (req, res) => {
   const shops = readData(SHOPS_PATH);
-  const newShop = { id: `shop-${uuidv4()}`, ...req.body };
+  const { name, shopTypeName } = req.body; // Expect shopTypeName
+  if (!name || !shopTypeName) {
+    return res.status(400).json({ message: 'Shop name and shopTypeName are required.' });
+  }
+  if (shops.some(shop => shop.name === name)) {
+    return res.status(409).json({ message: `Shop with name "${name}" already exists.` });
+  }
+  const newShop = { name, shopTypeName };
   shops.push(newShop);
   handleWrite(res, SHOPS_PATH, shops, 201, newShop);
 });
 
-app.put('/api/shops/:id', (req, res) => {
-  const { id } = req.params;
+app.put('/api/shops/:name', (req, res) => {
+  const { name } = req.params;
   const updatedShop = req.body;
   let shops = readData(SHOPS_PATH);
   
-  const shopIndex = shops.findIndex(shop => shop.id === id);
+  const shopIndex = shops.findIndex(shop => shop.name === name);
 
   if (shopIndex !== -1) {
-    shops[shopIndex] = { ...shops[shopIndex], ...updatedShop };
+    if (updatedShop.name && updatedShop.name !== name) {
+        return res.status(400).json({ message: 'Cannot change the name of a shop directly via PUT. Delete and re-add if name change is desired.' });
+    }
+    shops[shopIndex] = { ...shops[shopIndex], ...updatedShop, name: name };
     handleWrite(res, SHOPS_PATH, shops, 200, shops[shopIndex]);
   } else {
     res.status(404).json({ message: 'Shop not found' });
   }
 });
 
-app.delete('/api/shops/:id', (req, res) => {
-  const { id } = req.params;
+app.delete('/api/shops/:name', (req, res) => {
+  const { name } = req.params;
   let shops = readData(SHOPS_PATH);
   const initialLength = shops.length;
-  shops = shops.filter(shop => shop.id !== id);
+  shops = shops.filter(shop => shop.name !== name);
 
   if (shops.length < initialLength) {
     handleWrite(res, SHOPS_PATH, shops, 200, { message: 'Shop deleted' });
   } else {
     res.status(404).json({ message: 'Shop not found' });
+  }
+});
+
+// --- Shop Types API ---
+app.get('/api/shop-types', (req, res) => {
+  const shopTypes = readData(SHOP_TYPES_PATH);
+  res.json(shopTypes);
+});
+
+app.post('/api/shop-types', (req, res) => {
+  const shopTypes = readData(SHOP_TYPES_PATH);
+  const { name, ...rest } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: 'Shop type name is required.' });
+  }
+  if (shopTypes.some(st => st.name === name)) {
+    return res.status(409).json({ message: `Shop type with name "${name}" already exists.` });
+  }
+  const newShopType = { name, ...rest };
+  shopTypes.push(newShopType);
+  handleWrite(res, SHOP_TYPES_PATH, shopTypes, 201, newShopType);
+});
+
+app.put('/api/shop-types/:name', (req, res) => {
+  const { name } = req.params;
+  const updatedShopType = req.body;
+  let shopTypes = readData(SHOP_TYPES_PATH);
+  
+  const shopTypeIndex = shopTypes.findIndex(st => st.name === name);
+
+  if (shopTypeIndex !== -1) {
+    if (updatedShopType.name && updatedShopType.name !== name) {
+        return res.status(400).json({ message: 'Cannot change the name of a shop type directly via PUT. Delete and re-add if name change is desired.' });
+    }
+    shopTypes[shopTypeIndex] = { ...shopTypes[shopTypeIndex], ...updatedShopType, name: name };
+    handleWrite(res, SHOP_TYPES_PATH, shopTypes, 200, shopTypes[shopTypeIndex]);
+  } else {
+    res.status(404).json({ message: 'Shop Type not found' });
+  }
+});
+
+app.delete('/api/shop-types/:name', (req, res) => {
+  const { name } = req.params;
+  let shopTypes = readData(SHOP_TYPES_PATH);
+  const initialLength = shopTypes.length;
+  shopTypes = shopTypes.filter(st => st.name !== name);
+
+  if (shopTypes.length < initialLength) {
+    handleWrite(res, SHOP_TYPES_PATH, shopTypes, 200, { message: 'Shop Type deleted' });
+  } else {
+    res.status(404).json({ message: 'Shop Type not found' });
   }
 });
 
@@ -189,15 +296,15 @@ app.get('/api/shopping-list', (req, res) => {
 
 app.post('/api/shopping-list', (req, res) => {
   const shoppingList = readData(SHOPPING_LIST_PATH);
-  const itemToAdd = req.body;
-  const newListItem = { ...itemToAdd, ticked: false, listId: uuidv4() };
+  const itemToAdd = req.body; // This itemToAdd now has 'name' instead of 'id'
+  const newListItem = { ...itemToAdd, ticked: false, listId: uuidv4() }; // listId still UUID
   shoppingList.push(newListItem);
   handleWrite(res, SHOPPING_LIST_PATH, shoppingList, 201, newListItem);
 });
 
 app.delete('/api/shopping-list/:listId', (req, res) => {
-  let shoppingList = readData(SHOPPING_LIST_PATH);
   const { listId } = req.params;
+  let shoppingList = readData(SHOPPING_LIST_PATH);
   const initialLength = shoppingList.length;
   shoppingList = shoppingList.filter(item => item.listId !== listId);
 

@@ -13,7 +13,6 @@ const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) =
   const [modalFormData, setModalFormData] = useState(null);
 
   const handleShowModal = (item) => {
-    // Use a copy of the item for the form to avoid direct state mutation
     setModalFormData({ ...item });
     setShowModal(true);
   };
@@ -41,9 +40,9 @@ const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) =
     handleCloseModal();
   };
 
-  const handleDelete = (itemId) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      onDeleteItem(itemId);
+  const handleDelete = (itemName) => {
+    if (window.confirm(`Are you sure you want to delete "${itemName}"?`)) {
+      onDeleteItem(itemName);
     }
   };
 
@@ -80,6 +79,7 @@ const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) =
                   value={modalFormData.name}
                   onChange={handleModalFormChange}
                   required
+                  disabled // Name is the identifier, so it cannot be changed directly
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -157,7 +157,7 @@ const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) =
         </thead>
         <tbody>
           {catalog.map(item => (
-            <tr key={item.id}>
+            <tr key={item.name}>
               <td>{item.name}</td>
               <td>{item.type}</td>
               <td>{item.nicknames?.join(', ')}</td>
@@ -165,7 +165,7 @@ const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) =
               <td>
                 <ButtonGroup size="sm">
                   <Button variant="outline-primary" onClick={() => handleShowModal(item)}>Edit</Button>
-                  <Button variant="outline-danger" onClick={() => handleDelete(item.id)}>Delete</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(item.name)}>Delete</Button>
                 </ButtonGroup>
               </td>
             </tr>

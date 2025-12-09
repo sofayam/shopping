@@ -1,6 +1,5 @@
 [
   {
-    "id": "1",
     "name": "Milk",
     "nicknames": [
       "Moo Juice"
@@ -11,7 +10,6 @@
     ]
   },
   {
-    "id": "2",
     "name": "Bread",
     "nicknames": [
       "Loaf"
@@ -23,7 +21,6 @@
     ]
   },
   {
-    "id": "3",
     "name": "Apples",
     "nicknames": [
       "Fruit"
@@ -35,7 +32,6 @@
     ]
   },
   {
-    "id": "4",
     "name": "Paper Towels",
     "nicknames": [
       "Spill cleaner"
@@ -47,7 +43,6 @@
     ]
   },
   {
-    "id": "19f85b39-71a3-4d74-b4f5-d06f7c022d47",
     "name": "orangejuice",
     "nicknames": [
       "saft"

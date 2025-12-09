@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Table, Button, Form, Card, Row, Col, ButtonGroup, Modal } from 'react-bootstrap';
 
-const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
+const ShopManagement = ({ shops, shopTypes, onAddShop, onUpdateShop, onDeleteShop }) => {
   // State for the "Add Shop" form
   const [name, setName] = useState('');
-  const [types, setTypes] = useState('');
+  const [shopTypeName, setShopTypeName] = useState('');
 
   // State for the Edit Modal
   const [showModal, setShowModal] = useState(false);
@@ -22,11 +22,7 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
 
   const handleModalFormChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'types') {
-      setModalFormData(prev => ({ ...prev, types: value.split(',').map(s => s.trim()).filter(Boolean) }));
-    } else {
-      setModalFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setModalFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSaveModal = () => {
@@ -34,9 +30,9 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
     handleCloseModal();
   };
 
-  const handleDelete = (shopId) => {
-    if (window.confirm('Are you sure you want to delete this shop? This cannot be undone.')) {
-      onDeleteShop(shopId);
+  const handleDelete = (shopName) => {
+    if (window.confirm(`Are you sure you want to delete "${shopName}"? This cannot be undone.`)) {
+      onDeleteShop(shopName);
     }
   };
 
@@ -44,11 +40,11 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
     e.preventDefault();
     onAddShop({
       name,
-      types: types.split(',').map(t => t.trim()).filter(Boolean),
+      shopTypeName,
     });
     // Reset form
     setName('');
-    setTypes('');
+    setShopTypeName('');
   };
 
   const renderEditModal = () => {
@@ -68,16 +64,22 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
                 value={modalFormData.name}
                 onChange={handleModalFormChange}
                 required
+                disabled // Name is the identifier, so it cannot be changed directly
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Product Types (comma-separated)</Form.Label>
-              <Form.Control
-                type="text"
-                name="types"
-                value={modalFormData.types?.join(', ') || ''}
+              <Form.Label>Shop Type*</Form.Label>
+              <Form.Select
+                name="shopTypeName"
+                value={modalFormData.shopTypeName}
                 onChange={handleModalFormChange}
-              />
+                required
+              >
+                <option value="">Select a Shop Type</option>
+                {shopTypes.map(st => (
+                  <option key={st.name} value={st.name}>{st.name}</option>
+                ))}
+              </Form.Select>
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -97,7 +99,14 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
           <Form onSubmit={handleAddSubmit}>
             <Row>
               <Col md={6}><Form.Group className="mb-3"><Form.Label>Shop Name*</Form.Label><Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} required /></Form.Group></Col>
-              <Col md={6}><Form.Group className="mb-3"><Form.Label>Product Types (comma-separated)*</Form.Label><Form.Control type="text" value={types} onChange={(e) => setTypes(e.target.value)} required /></Form.Group></Col>
+              <Col md={6}><Form.Group className="mb-3"><Form.Label>Shop Type*</Form.Label>
+                <Form.Select value={shopTypeName} onChange={(e) => setShopTypeName(e.target.value)} required>
+                  <option value="">Select a Shop Type</option>
+                  {shopTypes.map(st => (
+                    <option key={st.name} value={st.name}>{st.name}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group></Col>
             </Row>
             <Button type="submit">Add Shop</Button>
           </Form>
@@ -109,19 +118,19 @@ const ShopManagement = ({ shops, onAddShop, onUpdateShop, onDeleteShop }) => {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Product Types Sold</th>
+            <th>Shop Type</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {shops.map(shop => (
-            <tr key={shop.id}>
+            <tr key={shop.name}>
               <td>{shop.name}</td>
-              <td>{shop.types?.join(', ')}</td>
+              <td>{shop.shopTypeName}</td> {/* Display the enriched shopTypeName */}
               <td>
                 <ButtonGroup size="sm">
                   <Button variant="outline-primary" onClick={() => handleShowModal(shop)}>Edit</Button>
-                  <Button variant="outline-danger" onClick={() => handleDelete(shop.id)}>Delete</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(shop.name)}>Delete</Button>
                 </ButtonGroup>
               </td>
             </tr>
