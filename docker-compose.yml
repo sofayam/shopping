@@ -1,10 +1,33 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     ports:
       - "3001:3001"
     volumes:
-      # Mount the data directory to persist data outside the container
-      - ./server/data:/app/data
+      - ./server/data:/usr/src/app/data
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    command: >
+      bash -c "npm install && node server.js"
+
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - server
+    command: >
+      bash -c "npm install && npm start"
+
+volumes:
+  server_data:

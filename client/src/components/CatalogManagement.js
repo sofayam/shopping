@@ -1,89 +1,179 @@
 import React, { useState } from 'react';
-import { Table, Button, Form, Card, Row, Col } from 'react-bootstrap';
+import { Table, Button, Form, Card, Row, Col, ButtonGroup, Modal } from 'react-bootstrap';
 
-const CatalogManagement = ({ catalog, itemTypes, onAdd }) => {
+const CatalogManagement = ({ catalog, onAddItem, onUpdateItem, onDeleteItem }) => {
+  // State for the "Add Item" form
   const [name, setName] = useState('');
   const [nicknames, setNicknames] = useState('');
   const [type, setType] = useState('');
   const [shops, setShops] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name || !type) {
-      alert('Name and Type are required.');
-      return;
+  // State for the Edit Modal
+  const [showModal, setShowModal] = useState(false);
+  const [modalFormData, setModalFormData] = useState(null);
+
+  const handleShowModal = (item) => {
+    // Use a copy of the item for the form to avoid direct state mutation
+    setModalFormData({ ...item });
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalFormData(null);
+  };
+
+  const handleModalFormChange = (e) => {
+    const { name, value } = e.target;
+    setModalFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleModalArrayFormChange = (e) => {
+    const { name, value } = e.target;
+    setModalFormData(prev => ({
+      ...prev,
+      [name]: value.split(',').map(s => s.trim()).filter(Boolean)
+    }));
+  };
+
+  const handleSaveModal = () => {
+    onUpdateItem(modalFormData);
+    handleCloseModal();
+  };
+
+  const handleDelete = (itemId) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      onDeleteItem(itemId);
     }
-    const newNicknames = nicknames.split(',').map(n => n.trim()).filter(Boolean);
-    const newShops = shops.split(',').map(s => s.trim()).filter(Boolean);
-    onAdd({ name, nicknames: newNicknames, type, shops: newShops });
+  };
+
+  const handleAddItemSubmit = (e) => {
+    e.preventDefault();
+    onAddItem({
+      name,
+      nicknames: nicknames.split(',').map(n => n.trim()).filter(Boolean),
+      type,
+      shops: shops.split(',').map(s => s.trim()).filter(Boolean),
+    });
+    // Reset form
     setName('');
     setNicknames('');
     setType('');
     setShops('');
   };
 
+  const renderEditModal = () => {
+    if (!modalFormData) return null;
+
+    return (
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Item: {modalFormData.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Item Name*</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="name"
+                  value={modalFormData.name}
+                  onChange={handleModalFormChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Item Type*</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="type"
+                  value={modalFormData.type}
+                  onChange={handleModalFormChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Nicknames (comma-separated)</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nicknames"
+                  value={modalFormData.nicknames?.join(', ') || ''}
+                  onChange={handleModalArrayFormChange}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Shops (comma-separated)</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="shops"
+                  value={modalFormData.shops?.join(', ') || ''}
+                  onChange={handleModalArrayFormChange}
+                />
+              </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSaveModal}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
   return (
     <>
-      <h2 className="mb-3">Manage Catalog</h2>
-
       <Card className="mb-4">
+        <Card.Header>Add New Catalog Item</Card.Header>
         <Card.Body>
-          <Card.Title>Add New Item</Card.Title>
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Item Name</Form.Label>
-                  <Form.Control type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Milk" required />
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nicknames (comma-separated)</Form.Label>
-                  <Form.Control type="text" value={nicknames} onChange={e => setNicknames(e.target.value)} placeholder="e.g., moo juice, white stuff" />
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Item Type</Form.Label>
-                  <Form.Control list="item-types-datalist" type="text" value={type} onChange={e => setType(e.target.value)} placeholder="e.g., dairy" required />
-                  <datalist id="item-types-datalist">
-                    {itemTypes.map(t => <option key={t} value={t} />)}
-                  </datalist>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Shops (comma-separated)</Form.Label>
-                  <Form.Control type="text" value={shops} onChange={e => setShops(e.target.value)} placeholder="e.g., Tesco, Waitrose" />
-                </Form.Group>
-              </Col>
+          <Form onSubmit={handleAddItemSubmit}>
+            {/* Add Item Form remains the same */}
+            <Row className="mb-3">
+              <Col md={6}><Form.Group><Form.Label>Item Name*</Form.Label><Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} required /></Form.Group></Col>
+              <Col md={6}><Form.Group><Form.Label>Item Type*</Form.Label><Form.Control type="text" value={type} onChange={(e) => setType(e.target.value)} required /></Form.Group></Col>
+            </Row>
+            <Row className="mb-3">
+              <Col md={6}><Form.Group><Form.Label>Nicknames (comma-separated)</Form.Label><Form.Control type="text" value={nicknames} onChange={(e) => setNicknames(e.target.value)} /></Form.Group></Col>
+              <Col md={6}><Form.Group><Form.Label>Shops (comma-separated)</Form.Label><Form.Control type="text" value={shops} onChange={(e) => setShops(e.target.value)} /></Form.Group></Col>
             </Row>
             <Button type="submit">Add Item</Button>
           </Form>
         </Card.Body>
       </Card>
 
+      <h3>Current Catalog</h3>
       <Table striped bordered hover responsive>
         <thead>
           <tr>
             <th>Name</th>
-            <th>Nicknames</th>
             <th>Type</th>
+            <th>Nicknames</th>
             <th>Shops</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {catalog.map(item => (
             <tr key={item.id}>
               <td>{item.name}</td>
-              <td>{item.nicknames.join(', ')}</td>
               <td>{item.type}</td>
-              <td>{(item.shops || []).join(', ')}</td>
+              <td>{item.nicknames?.join(', ')}</td>
+              <td>{item.shops?.join(', ')}</td>
+              <td>
+                <ButtonGroup size="sm">
+                  <Button variant="outline-primary" onClick={() => handleShowModal(item)}>Edit</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(item.id)}>Delete</Button>
+                </ButtonGroup>
+              </td>
             </tr>
           ))}
         </tbody>
       </Table>
+      
+      {renderEditModal()}
     </>
   );
 };

@@ -1,53 +1,39 @@
 import React, { useState } from 'react';
-import { Form, Button, Row, Col } from 'react-bootstrap';
+import Select from 'react-select';
+import { Button, Form, Row, Col } from 'react-bootstrap';
 
-const AddItemForm = ({ catalog, onAdd }) => {
-  const [inputValue, setInputValue] = useState('');
+const AddItemForm = ({ catalog, onAddItem }) => {
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const options = catalog.map(item => ({
+    value: item,
+    label: `${item.name} (${item.nicknames.join(', ')})`,
+  }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!inputValue) return;
-
-    // Find the catalog item that matches the input value (name or nickname)
-    const selectedItem = catalog.find(
-      item => item.name.toLowerCase() === inputValue.toLowerCase() ||
-              item.nicknames.some(nick => nick.toLowerCase() === inputValue.toLowerCase())
-    );
-
     if (selectedItem) {
-      onAdd(selectedItem.name);
-      setInputValue('');
-    } else {
-      alert(`Item "${inputValue}" not found in catalog.`);
+      onAddItem(selectedItem.value);
+      setSelectedItem(null); // Reset dropdown after adding
     }
   };
 
   return (
-    <Form onSubmit={handleSubmit} className="mb-4">
+    <Form onSubmit={handleSubmit}>
       <Row>
-        <Col>
-          <Form.Group>
-            <Form.Label>Add Item from Catalog</Form.Label>
-            <Form.Control
-              type="text"
-              list="catalog-items-datalist"
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              placeholder="Type to search..."
-            />
-            <datalist id="catalog-items-datalist">
-              {catalog.map(item => (
-                <option key={item.name} value={item.name} />
-              ))}
-              {/* Add nicknames to the datalist as well */}
-              {catalog.flatMap(item => item.nicknames.map(nick => (
-                <option key={`${item.name}-${nick}`} value={nick} />
-              ))).filter((value, index, self) => self.indexOf(value) === index)}
-            </datalist>
-          </Form.Group>
+        <Col xs={12} md={8}>
+          <Select
+            options={options}
+            value={selectedItem}
+            onChange={setSelectedItem}
+            placeholder="Type to search for an item..."
+            isClearable
+          />
         </Col>
-        <Col xs="auto" className="d-flex align-items-end">
-          <Button type="submit">Add to List</Button>
+        <Col xs={12} md={4} className="d-grid">
+          <Button type="submit" disabled={!selectedItem}>
+            Add to List
+          </Button>
         </Col>
       </Row>
     </Form>

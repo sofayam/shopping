@@ -1,38 +1,43 @@
 [
   {
-    "name": "bulgur",
-    "nicknames": [
-      "triguero"
-    ],
-    "type": "dry",
-    "id": "1764537032657",
-    "purchased": false
-  },
-  {
     "id": "1",
-    "name": "Bread",
-    "nicknames": [
-      "loaf"
-    ],
-    "type": "bakery",
-    "purchased": false
-  },
-  {
-    "id": "0",
     "name": "Milk",
     "nicknames": [
-      "moo juice"
+      "Moo Juice"
     ],
-    "type": "dairy",
-    "purchased": false
+    "type": "Dairy",
+    "shops": [
+      "QuickStop"
+    ],
+    "ticked": false,
+    "listId": "9e369bf1-db09-4272-81dd-453270c751d6"
   },
   {
-    "name": "Cheese",
-    "nicknames": [],
-    "type": "dairy",
-    "shops": [
-      "Waitrose"
+    "id": "2",
+    "name": "Bread",
+    "nicknames": [
+      "Loaf"
     ],
-    "purchased": false
+    "type": "Bakery",
+    "shops": [
+      "SuperMart",
+      "Local Bakery"
+    ],
+    "ticked": false,
+    "listId": "fdfef8ca-68ae-4234-b935-525d1a4745be"
+  },
+  {
+    "id": "19f85b39-71a3-4d74-b4f5-d06f7c022d47",
+    "name": "orangejuice",
+    "nicknames": [
+      "saft"
+    ],
+    "type": "juice",
+    "shops": [],
+    "availableShops": [
+      "juiceshop"
+    ],
+    "ticked": false,
+    "listId": "d14978c9-2b66-49ca-bbcb-bc07b9c37591"
   }
 ]

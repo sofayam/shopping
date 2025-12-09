@@ -1,40 +1,58 @@
 [
   {
+    "id": "1",
     "name": "Milk",
     "nicknames": [
-      "moo juice"
+      "Moo Juice"
     ],
-    "type": "dairy",
-    "shops": ["Tesco"]
+    "type": "Dairy",
+    "shops": [
+      "sshop"
+    ]
   },
   {
+    "id": "2",
     "name": "Bread",
     "nicknames": [
-      "loaf"
+      "Loaf"
     ],
-    "type": "bakery",
-    "shops": ["Tesco", "Waitrose"]
+    "type": "Bakery",
+    "shops": [
+      "SuperMart",
+      "Local Bakery"
+    ]
   },
   {
-    "name": "Cheese",
-    "nicknames": [],
-    "type": "dairy",
-    "shops": ["Waitrose"]
-  },
-  {
-    "name": "loo paper",
+    "id": "3",
+    "name": "Apples",
     "nicknames": [
-      "bog roll"
+      "Fruit"
     ],
-    "type": "household",
+    "type": "Produce",
+    "shops": [
+      "SuperMart",
+      "Farmers Market"
+    ]
+  },
+  {
+    "id": "4",
+    "name": "Paper Towels",
+    "nicknames": [
+      "Spill cleaner"
+    ],
+    "type": "Household",
+    "shops": [
+      "SuperMart",
+      "QuickStop"
+    ]
+  },
+  {
+    "id": "19f85b39-71a3-4d74-b4f5-d06f7c022d47",
+    "name": "orangejuice",
+    "nicknames": [
+      "saft"
+    ],
+    "type": "juice",
     "shops": []
-  },
-  {
-    "name": "bulgur",
-    "nicknames": [
-      "triguero"
-    ],
-    "type": "dry",
-    "shops": ["Tesco"]
   }
 ]

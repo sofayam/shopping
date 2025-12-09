@@ -1,56 +1,93 @@
-Based on the provided documents, here is a guide to getting the Shopping App configured and running.
+# Shopping App - Configuration and Execution Guide
 
-### System Overview
+This document provides instructions on how to run the Shopping App.
 
-The application follows a client-server architecture:
+---
 
-*   **Backend**: A Node.js/Express server that manages the data. It serves a REST API to interact with two JSON files: `catalog.json` (for all products) and `shopping_list.json` (for the current list).
-*   **Frontend**: A React single-page application that provides the user interface for managing the catalog and the shopping list. It communicates with the backend via the API.
+## Option 1: Running with Docker (Recommended)
 
-Both parts of the application must be running simultaneously for the system to work correctly.
+### Prerequisites
 
-### 1. Configuration: Install Dependencies
+*   Docker
+*   Docker Compose
 
-Before you can run the application, you need to install the required Node.js packages for both the client and the server.
+### Execution
 
-**A. Install Server Dependencies:**
+The entire application (frontend and backend) can be started using Docker Compose.
 
-Open a terminal and navigate to the `server` directory. Run the following command:
+1.  **Open a terminal** in the root directory of the project.
 
-```bash
-cd server
-npm install
-```
+2.  **Run the following command:**
 
-**B. Install Client Dependencies:**
+    ```bash
+    docker-compose up --build
+    ```
 
-Open a second terminal and navigate to the `client` directory. Run the following command:
+    *   The `--build` flag ensures that the Docker images are rebuilt if there are any changes to the `Dockerfile` or the application code.
 
-```bash
-cd client
-npm install
-```
+3.  **Access the application:**
+    *   The **Frontend** will be available at [http://localhost:3000](http://localhost:3000).
+    *   The **Backend API** will be available at [http://localhost:3001](http://localhost:3001).
 
-### 2. Running the Application
+### Stopping the Application
 
-You will need two separate terminals running at the same time.
+1.  Press `Ctrl + C` in the terminal where `docker-compose` is running.
+2.  To remove the containers, run: `docker-compose down`
 
-**A. Start the Backend Server:**
+---
 
-In your first terminal, which should still be in the `/server` directory, start the Node.js server:
+## Option 2: Running Locally (Without Docker)
 
-```bash
-node server.js
-```
+You will need two separate terminals to run the backend server and the frontend client simultaneously.
 
-You should see a message indicating that the server is running, typically on a port like `3001`. This terminal must remain open.
+### Prerequisites
 
-**B. Start the Frontend Client:**
+*   Node.js (v18 or later)
+*   npm
 
-In your second terminal, which should still be in the `/client` directory, start the React development server:
+### Terminal 1: Run the Backend Server
 
-```bash
-npm start
-```
+1.  **Navigate to the server directory:**
+    ```bash
+    cd server
+    ```
 
-This will automatically open a new tab in your default web browser with the application loaded. The React app uses a proxy to forward API requests to the backend server, so you can use the application without any further configuration.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the server:**
+    ```bash
+    node server.js
+    ```
+
+4.  The backend API is now running at `http://localhost:3001`.
+
+### Terminal 2: Run the Frontend Client
+
+1.  **Navigate to the client directory:**
+    ```bash
+    cd client
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the React development server:**
+    ```bash
+    npm start
+    ```
+
+4.  The frontend application will automatically open in your default web browser at `http://localhost:3000`.
+
+---
+
+## Project Structure
+
+*   `/client`: Contains the React frontend application.
+*   `/server`: Contains the Node.js Express backend API.
+*   `/server/data`: Stores the `catalog.json` and `shopping_list.json` files.
+*   `docker-compose.yml`: Orchestrates the multi-container setup for Docker.

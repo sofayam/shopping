@@ -1,168 +1,165 @@
-import React, { useState } from 'react';
-import { ListGroup, Button, Form, Card } from 'react-bootstrap';
-import AddItemForm from './AddItemForm';
+import React, { useState, useMemo } from 'react';
+import { ListGroup, Button, Form, Dropdown, ButtonGroup } from 'react-bootstrap';
 
-const ShoppingList = ({ list, catalog, onToggle, onDelete, onAdd, onArchive, onRemovePurchased, shops }) => {
-  const [selectedShop, setSelectedShop] = useState('');
+const ShoppingList = ({ list, allShops, onRemove, onToggle, onRemoveTicked, onArchive }) => {
+  const [selectedShop, setSelectedShop] = useState('All Shops');
 
-  // Filter list based on selected shop
-  const getFilteredList = () => {
-    if (!selectedShop) {
-      return list;
-    }
-    return list.filter(item => {
-      const itemShops = item.shops || [];
-      return itemShops.length === 0 || itemShops.includes(selectedShop);
-    });
-  };
+  const filteredAndGroupedList = useMemo(() => {
+    if (selectedShop === 'All Shops') {
+      // --- Optimization Algorithm to Minimize Shops ---
+      const itemsToCover = new Set(list.map(item => item.listId));
+      const fullItemList = list;
 
-  // Group items by shop when no shop is selected
-  const getGroupedByShop = () => {
-    if (selectedShop) {
-      return null;
-    }
-    
-    const grouped = {};
-    const itemsAdded = new Set();
-    
-    list.forEach(item => {
-      // Skip if we've already added this item
-      if (itemsAdded.has(item.name)) {
-        return;
+      // Create a map of which shops sell which items from the list
+      const shopMap = {};
+      fullItemList.forEach(item => {
+        // USE THE NEW `availableShops` PROPERTY
+        const itemShops = item.availableShops && item.availableShops.length > 0 ? item.availableShops : ['Any Shop'];
+        itemShops.forEach(shop => {
+          if (!shopMap[shop]) {
+            shopMap[shop] = [];
+          }
+          shopMap[shop].push(item.listId);
+        });
+      });
+
+      const optimizedPlan = {};
+      while (itemsToCover.size > 0) {
+        let bestShop = '';
+        let maxCovered = 0;
+        let itemsCoveredByBestShop = [];
+
+        // Find the shop that covers the most REMAINING items
+        for (const shop in shopMap) {
+          const coveredItems = shopMap[shop].filter(itemId => itemsToCover.has(itemId));
+          if (coveredItems.length > maxCovered) {
+            maxCovered = coveredItems.length;
+            bestShop = shop;
+            itemsCoveredByBestShop = coveredItems;
+          }
+        }
+
+        if (maxCovered === 0) break;
+
+        const itemsForShop = fullItemList.filter(item => itemsCoveredByBestShop.includes(item.listId));
+        optimizedPlan[bestShop] = itemsForShop;
+        
+        itemsCoveredByBestShop.forEach(itemId => itemsToCover.delete(itemId));
       }
       
-      const itemShops = item.shops || [];
-      
-      // Determine which shop to add this item to
-      let targetShop;
-      if (itemShops.length === 0) {
-        // Items with no shop restrictions go to the first shop in the list
-        targetShop = shops.length > 0 ? shops[0] : 'Other';
-      } else {
-        // Add to the first appropriate shop
-        targetShop = itemShops[0];
+      if (itemsToCover.size > 0) {
+          optimizedPlan['Any Shop'] = fullItemList.filter(item => itemsToCover.has(item.listId));
+      }
+
+      // Group by type within each shop and sort
+      for (const shop in optimizedPlan) {
+        const byType = optimizedPlan[shop].reduce((acc, item) => {
+          const typeKey = item.type || 'Uncategorized';
+          if (!acc[typeKey]) acc[typeKey] = [];
+          acc[typeKey].push(item);
+          return acc;
+        }, {});
+
+        for (const type in byType) {
+          byType[type].sort((a, b) => a.name.localeCompare(b.name));
+        }
+        optimizedPlan[shop] = byType;
       }
       
-      if (!grouped[targetShop]) grouped[targetShop] = {};
-      const itemType = item.type || 'Uncategorized';
-      if (!grouped[targetShop][itemType]) grouped[targetShop][itemType] = [];
-      grouped[targetShop][itemType].push(item);
+      return optimizedPlan;
+
+    } else {
+      // --- Logic for Filtering by a Single Shop ---
+      // USE THE NEW `availableShops` PROPERTY
+      const items = list.filter(item => item.availableShops && item.availableShops.includes(selectedShop));
       
-      itemsAdded.add(item.name);
-    });
-    return grouped;
+      const grouped = items.reduce((acc, item) => {
+        const groupKey = item.type || 'Uncategorized';
+        if (!acc[groupKey]) {
+          acc[groupKey] = [];
+        }
+        acc[groupKey].push(item);
+        return acc;
+      }, {});
+
+      for (const type in grouped) {
+        grouped[type].sort((a, b) => a.name.localeCompare(b.name));
+      }
+      return grouped;
+    }
+  }, [list, selectedShop]);
+
+  const renderList = () => {
+    const groups = Object.keys(filteredAndGroupedList).sort();
+    if (groups.length === 0) return <p>Your shopping list is empty.</p>;
+
+    return groups.map(groupName => (
+        <div key={groupName} className="mb-4">
+            <h4>{groupName}</h4>
+            {selectedShop === 'All Shops' ? 
+                Object.keys(filteredAndGroupedList[groupName]).sort().map(typeName => (
+                    <div key={typeName} className="mb-3">
+                        <h5>{typeName}</h5>
+                        <ListGroup>
+                        {filteredAndGroupedList[groupName][typeName].map(item => (
+                            <ListGroup.Item key={item.listId} variant={item.ticked ? 'light' : ''} className="d-flex justify-content-between align-items-center">
+                                <Form.Check
+                                    type="checkbox"
+                                    checked={item.ticked}
+                                    onChange={() => onToggle(item.listId, !item.ticked)}
+                                    label={item.name}
+                                    className={item.ticked ? 'text-muted' : ''}
+                                    style={{ textDecoration: item.ticked ? 'line-through' : 'none' }}
+                                />
+                                <Button variant="outline-danger" size="sm" onClick={() => onRemove(item.listId)}>Remove</Button>
+                            </ListGroup.Item>
+                        ))}
+                        </ListGroup>
+                    </div>
+                ))
+            :
+                <ListGroup>
+                {filteredAndGroupedList[groupName].map(item => (
+                    <ListGroup.Item key={item.listId} variant={item.ticked ? 'light' : ''} className="d-flex justify-content-between align-items-center">
+                        <Form.Check
+                            type="checkbox"
+                            checked={item.ticked}
+                            onChange={() => onToggle(item.listId, !item.ticked)}
+                            label={item.name}
+                            className={item.ticked ? 'text-muted' : ''}
+                            style={{ textDecoration: item.ticked ? 'line-through' : 'none' }}
+                        />
+                        <Button variant="outline-danger" size="sm" onClick={() => onRemove(item.listId)}>Remove</Button>
+                    </ListGroup.Item>
+                ))}
+                </ListGroup>
+            }
+        </div>
+    ));
   };
 
-  const filteredList = getFilteredList();
-  const groupedList = getGroupedByShop();
 
   return (
     <>
-      <h2 className="mb-3">Shopping List</h2>
-      
-      <Card className="mb-4">
-        <Card.Body>
-          <AddItemForm catalog={catalog} onAdd={onAdd} />
-        </Card.Body>
-      </Card>
-
-      {/* Shop Filter Dropdown */}
-      <Card className="mb-4">
-        <Card.Body>
-          <Form.Group>
-            <Form.Label>Filter by Shop</Form.Label>
-            <Form.Select 
-              value={selectedShop} 
-              onChange={(e) => setSelectedShop(e.target.value)}
-            >
-              <option value="">All Shops</option>
-              {shops.map(shop => (
-                <option key={shop} value={shop}>{shop}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Card.Body>
-      </Card>
-
-      {/* Shopping List Display */}
-      {selectedShop ? (
-        // Flat list when shop is selected
-        <>
-          <ListGroup>
-            {filteredList.length === 0 && <ListGroup.Item>No items available from {selectedShop}.</ListGroup.Item>}
-            {filteredList.map(item => (
-              <ListGroup.Item key={item.name} variant={item.purchased ? 'success' : ''} className="d-flex justify-content-between align-items-center">
-                <div>
-                  <Form.Check 
-                    type="checkbox"
-                    checked={item.purchased}
-                    onChange={() => onToggle(item.name, !item.purchased)}
-                    label={item.name}
-                    className="me-2"
-                  />
-                </div>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item.name)}>
-                  Delete
-                </Button>
-              </ListGroup.Item>
+      <div className="d-flex justify-content-between mb-3">
+        <Dropdown as={ButtonGroup}>
+          <Dropdown.Toggle id="dropdown-shop-filter">
+            Filter by Shop: {selectedShop}
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            {allShops.map(shop => (
+              <Dropdown.Item key={shop} onClick={() => setSelectedShop(shop)}>
+                {shop}
+              </Dropdown.Item>
             ))}
-          </ListGroup>
-        </>
-      ) : (
-        // Grouped by shop and type when no shop selected
-        <>
-          {list.length === 0 ? (
-            <ListGroup>
-              <ListGroup.Item>Your shopping list is empty.</ListGroup.Item>
-            </ListGroup>
-          ) : (
-            Object.entries(groupedList).map(([shop, typeGroups]) => (
-              <div key={shop} className="mb-5">
-                <h5>{shop}</h5>
-                {Object.entries(typeGroups).map(([type, items]) => (
-                  <div key={`${shop}-${type}`} className="mb-3">
-                    <h6 className="text-muted">{type}</h6>
-                    <ListGroup>
-                      {items.map(item => (
-                        <ListGroup.Item key={item.name} variant={item.purchased ? 'success' : ''} className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <Form.Check 
-                              type="checkbox"
-                              checked={item.purchased}
-                              onChange={() => onToggle(item.name, !item.purchased)}
-                              label={item.name}
-                              className="me-2"
-                            />
-                          </div>
-                          <Button variant="danger" size="sm" onClick={() => onDelete(item.name)}>
-                            Delete
-                          </Button>
-                        </ListGroup.Item>
-                      ))}
-                    </ListGroup>
-                  </div>
-                ))}
-              </div>
-            ))
-          )}
-        </>
-      )}
-
-      {/* Action Buttons */}
-      {list.length > 0 && (
-        <div className="mt-4">
-          <Button 
-            variant="warning" 
-            onClick={onRemovePurchased}
-            className="me-2"
-          >
-            Remove Purchased Items
-          </Button>
-          <Button variant="info" onClick={onArchive}>
-            Archive and Start New List
-          </Button>
-        </div>
-      )}
+          </Dropdown.Menu>
+        </Dropdown>
+        <ButtonGroup>
+            <Button variant="warning" onClick={onRemoveTicked}>Remove Ticked</Button>
+            <Button variant="danger" onClick={onArchive}>Archive List</Button>
+        </ButtonGroup>
+      </div>
+      {renderList()}
     </>
   );
 };

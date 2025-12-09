@@ -1,6 +1,17 @@
-# Dependencies
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
 /node_modules
 
-# Misc
+# misc
 .DS_Store
+.env
+.env.local
+
+# debug
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Data files - DO NOT COMMIT APPLICATION DATA
+/data/*.json
