@@ -11,8 +11,7 @@ services:
       - ./server/data:/usr/src/app/data
       - ./server:/usr/src/app
       - /usr/src/app/node_modules
-    command: >
-      bash -c "npm install && node server.js"
+    
 
 
   client:
@@ -26,8 +25,7 @@ services:
       - /usr/src/app/node_modules
     depends_on:
       - server
-    command: >
-      bash -c "npm install && npm start"
+    
 
 volumes:
   server_data:
