@@ -1,20 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const BLANK_MAPPING = { item_type: '', preferred_shop_types: '' };
 
-function WhatIsWhereManagement({ whatIsWhere, items, shopTypes, onUpdate }) {
+function WhatIsWhereManagement({ whatIsWhere, itemTypes, shopTypes, onUpdate }) {
   const [formState, setFormState] = useState(BLANK_MAPPING);
   const [isEditing, setIsEditing] = useState(false);
-  const [availableItemTypes, setAvailableItemTypes] = useState([]);
 
-  useEffect(() => {
-    if (items) {
-      const uniqueItemTypes = [...new Set(items.map(item => item.item_type))];
-      setAvailableItemTypes(uniqueItemTypes);
-    }
-  }, [items]);
-
-  if (!whatIsWhere || !items || !shopTypes) {
+  if (!whatIsWhere || !itemTypes || !shopTypes) {
     return <p>Loading WhatIsWhere data...</p>;
   }
 
@@ -69,6 +61,8 @@ function WhatIsWhereManagement({ whatIsWhere, items, shopTypes, onUpdate }) {
     handleCancel();
   };
 
+  const unmappedItemTypes = itemTypes.filter(type => !whatIsWhere[type]);
+
   return (
     <section>
       <h3>What Is Where (Item Type to Preferred Shop Types)</h3>
@@ -105,9 +99,13 @@ function WhatIsWhereManagement({ whatIsWhere, items, shopTypes, onUpdate }) {
           disabled={isEditing}
         >
           <option value="">Select Item Type</option>
-          {availableItemTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
-          ))}
+          {isEditing ? (
+            <option key={formState.item_type} value={formState.item_type}>{formState.item_type}</option>
+          ) : (
+            unmappedItemTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))
+          )}
         </select>
         <textarea
           name="preferred_shop_types"

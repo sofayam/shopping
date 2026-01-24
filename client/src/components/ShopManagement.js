@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 
 const BLANK_SHOP = { name: '', shop_type: '', aisle_order: '' };
 
-function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
+function ShopManagement({ shops, shopTypes, itemTypes, onUpdate }) { // itemTypes prop
   const [formState, setFormState] = useState(BLANK_SHOP);
   const [isEditing, setIsEditing] = useState(false);
-  const [availableItemTypes, setAvailableItemTypes] = useState([]);
-  const [nameSuggestions, setNameSuggestions] = useState([]); // New state for name suggestions
+  const [nameSuggestions, setNameSuggestions] = useState([]);
 
-  useEffect(() => {
-    if (whatIsWhere) {
-      setAvailableItemTypes(Object.keys(whatIsWhere));
-    }
-  }, [whatIsWhere]);
+  // No longer need useEffect to derive itemTypes from whatIsWhere
+  // useEffect(() => {
+  //   if (whatIsWhere) {
+  //     setAvailableItemTypes(Object.keys(whatIsWhere));
+  //   }
+  // }, [whatIsWhere]);
 
-  if (!shops || !shopTypes || !whatIsWhere) {
+  if (!shops || !shopTypes || !itemTypes) { // Check for itemTypes prop
     return <p>Loading shop data...</p>;
   }
 
@@ -144,13 +144,13 @@ function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
         </select>
         <textarea
           name="aisle_order"
-          placeholder={`Aisle Order (comma-separated item types, e.g., '${availableItemTypes.slice(0, 3).join(', ')}...')`}
+          placeholder={`Aisle Order (comma-separated item types, e.g., '${itemTypes.slice(0, 3).join(', ')}...')`}
           value={formState.aisle_order}
           onChange={handleFormChange}
           rows="3"
           style={{ width: '100%' }}
         ></textarea>
-        <small>Available Item Types: {availableItemTypes.join(', ')}</small>
+        <small>Available Item Types: {itemTypes.join(', ')}</small>
         <button type="submit">{isEditing ? 'Update Shop' : 'Add Shop'}</button>
         {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}
       </form>

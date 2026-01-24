@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 
 const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '' };
 
-function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
+function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes prop
   const [formState, setFormState] = useState(BLANK_ITEM);
   const [isEditing, setIsEditing] = useState(false);
-  const [itemTypes, setItemTypes] = useState([]);
-  const [nameSuggestions, setNameSuggestions] = useState([]); // New state for name suggestions
+  const [nameSuggestions, setNameSuggestions] = useState([]);
 
-  useEffect(() => {
-    if (whatIsWhere) {
-      setItemTypes(Object.keys(whatIsWhere));
-    }
-  }, [whatIsWhere]);
+  // No longer need useEffect to derive itemTypes from whatIsWhere
+  // useEffect(() => {
+  //   if (whatIsWhere) {
+  //     setItemTypes(Object.keys(whatIsWhere));
+  //   }
+  // }, [whatIsWhere]);
 
-  if (!items || !shops || !whatIsWhere) {
+  if (!items || !shops || !itemTypes) { // Check for itemTypes prop
     return <p>Loading item data...</p>;
   }
 

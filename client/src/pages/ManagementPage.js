@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ShopTypeManagement from '../components/ShopTypeManagement';
+import ItemTypeManagement from '../components/ItemTypeManagement'; // Import new component
 import ItemManagement from '../components/ItemManagement';
 import ShopManagement from '../components/ShopManagement';
-import WhatIsWhereManagement from '../components/WhatIsWhereManagement'; // Import new component
+import WhatIsWhereManagement from '../components/WhatIsWhereManagement';
 
 function ManagementPage() {
   const [appData, setAppData] = useState(null);
@@ -32,7 +33,10 @@ function ManagementPage() {
 
   const handleUpdate = (fileName, data) => {
     // Optimistically update local state
-    const key = fileName.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
+    let key = fileName.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
+    if (fileName === 'item_types.yaml') { // Special key for itemTypesList
+      key = 'itemTypesList';
+    }
     setAppData(prev => ({ ...prev, [key]: data }));
 
     // Update server
@@ -62,24 +66,29 @@ function ManagementPage() {
             onUpdate={(newData) => handleUpdate('shop_types.yaml', newData)}
           />
           <hr />
+          <ItemTypeManagement
+            itemTypes={appData.itemTypesList} // Use the new itemTypesList
+            onUpdate={(newData) => handleUpdate('item_types.yaml', newData)}
+          />
+          <hr />
           <ItemManagement
             items={appData.items}
             shops={appData.shops}
-            whatIsWhere={appData.whatIsWhere}
+            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
             onUpdate={(newData) => handleUpdate('items.yaml', newData)}
           />
           <hr />
           <ShopManagement
             shops={appData.shops}
             shopTypes={appData.shopTypes}
-            whatIsWhere={appData.whatIsWhere}
+            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
             onUpdate={(newData) => handleUpdate('shops.yaml', newData)}
           />
           <hr />
           <WhatIsWhereManagement
             whatIsWhere={appData.whatIsWhere}
-            items={appData.items} // To get unique item types
-            shopTypes={appData.shopTypes} // To get available shop types
+            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
+            shopTypes={appData.shopTypes}
             onUpdate={(newData) => handleUpdate('what_is_where.yaml', newData)}
           />
           <hr />

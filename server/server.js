@@ -17,10 +17,22 @@ const dataDir = path.join(__dirname, 'data');
 const readYaml = (fileName) => {
   try {
     const fileContents = fs.readFileSync(path.join(dataDir, fileName), 'utf8');
-    return yaml.load(fileContents);
+    const data = yaml.load(fileContents);
+    // Return empty array for lists, empty object for mappings if data is null
+    if (data === null) {
+      if (fileName === 'what_is_where.yaml') {
+        return {};
+      }
+      return []; // Default to empty array for other list-like files
+    }
+    return data;
   } catch (e) {
     console.error(`Error reading ${fileName}:`, e);
-    return null;
+    // If file doesn't exist or is unreadable, return appropriate empty structure
+    if (fileName === 'what_is_where.yaml') {
+      return {};
+    }
+    return [];
   }
 };
 
@@ -36,6 +48,7 @@ const EDITABLE_FILES = [
   'items.yaml',
   'shops.yaml',
   'shop_types.yaml',
+  'item_types.yaml', // Added item_types.yaml
   'what_is_where.yaml',
   'item_list.yaml'
 ];
@@ -47,7 +60,11 @@ app.get('/api/all-data', (req, res) => {
   EDITABLE_FILES.forEach(file => {
     // a bit of camelCase for the client
     const key = file.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
-    data[key] = readYaml(file);
+    if (key === 'itemTypes') { // Special handling for itemTypes to avoid conflict with existing 'items' key
+      data['itemTypesList'] = readYaml(file);
+    } else {
+      data[key] = readYaml(file);
+    }
   });
   res.json(data);
 });
