@@ -21,8 +21,19 @@
 - preferred shop (optional)
 
 
+
+
+# Application interfaces
+
 ## ItemList (list)
 - list of names of item currently needed
+
+## ListPage
+
+A web page with the following functionality
+- new list creates a new itemlist and a corresponding file individuated by date and time in file name
+- add item
+- delete item
 
 ## ShoppingPage 
 
@@ -40,5 +51,12 @@ finally i can:
 - change chosen shop(s) and recreate purchase list
 
 ## Management Interface
-a set of pages for editing the data model
+A set of pages for editing the data model and only allowing creation of valid entries.
 
+
+
+# Implementation notes
+
+All data, including model stored as yaml files which are validated when read in.
+
+All data entry where possible powered by intelligent drop downs to minimise entry effort and eliminate invalid input.
