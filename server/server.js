@@ -57,15 +57,30 @@ const EDITABLE_FILES = [
 
 app.get('/api/all-data', (req, res) => {
   const data = {};
+  const rawData = {}; // Store raw loaded data to perform cross-file validation
+
   EDITABLE_FILES.forEach(file => {
-    // a bit of camelCase for the client
     const key = file.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
-    if (key === 'itemTypes') { // Special handling for itemTypes to avoid conflict with existing 'items' key
-      data['itemTypesList'] = readYaml(file);
+    const loadedContent = readYaml(file);
+    rawData[file] = loadedContent; // Store raw content
+
+    if (file === 'item_types.yaml') { // Special handling for itemTypes
+      data['itemTypesList'] = loadedContent;
     } else {
-      data[key] = readYaml(file);
+      data[key] = loadedContent;
     }
   });
+
+  // --- Cross-file validation for itemList ---
+  const allItems = rawData['items.yaml'] || [];
+  const validItemNames = new Set(allItems.map(item => item.name));
+
+  let currentItemList = rawData['item_list.yaml'] || [];
+  const validatedItemList = currentItemList.filter(itemName => validItemNames.has(itemName));
+
+  // Update itemList in the data object
+  data['itemList'] = validatedItemList;
+
   res.json(data);
 });
 
@@ -102,5 +117,6 @@ app.post('/api/item-list', (req, res) => {
 
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`Server listening on all network interfaces (0.0.0.0) on port ${port}`);
+  console.log(`Access from other devices on your LAN using your machine's IP address (e.g., http://192.168.1.100:${port})`);
 });
