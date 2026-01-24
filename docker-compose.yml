@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  shopping-app:
+    build:
+      context: . # Build from the current directory where Dockerfile is located
+      dockerfile: Dockerfile # Specify the Dockerfile name
+    ports:
+      - "3001:3001" # Map host port 3001 to container port 3001
+    volumes:
+      # Persist the data directory outside the container
+      # This maps a named volume 'shopping_data' to the container's /app/server/data
+      - shopping_data:/app/server/data
+    # Optional: restart policy
+    restart: unless-stopped
+
+volumes:
+  shopping_data: # Define the named volume
