@@ -13,8 +13,11 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-# Make port 3001 available to the world outside this container
-EXPOSE 3001
+# Use the CLIENT_PORT environment variable
+ENV PORT=${CLIENT_PORT}
+
+# Expose the port defined in the environment variable
+EXPOSE ${PORT}
 
 # Define the command to run your app
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

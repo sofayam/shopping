@@ -6,7 +6,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "${SERVER_PORT}:3001"
     volumes:
       - ./server/data:/usr/src/app/data
       - ./server:/usr/src/app
@@ -17,12 +17,12 @@ services:
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "${CLIENT_PORT}:${CLIENT_PORT}" # Map the client port
+    environment:
+      - CLIENT_PORT=${CLIENT_PORT} # Pass the client port to the container
     volumes:
       - ./client:/usr/src/app
-      - /usr/src/app/node_modules
     depends_on:
       - server
     
