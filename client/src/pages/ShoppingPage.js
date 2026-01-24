@@ -9,7 +9,7 @@ function ShoppingPage() {
 
   // Fetch all application data
   useEffect(() => {
-    fetch('http://localhost:3001/api/all-data')
+    fetch('/api/all-data')
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -86,7 +86,7 @@ function ShoppingPage() {
   }, [appData, selectedShops]);
 
   const updateServerList = (newList) => {
-    fetch('http://localhost:3001/api/item-list', {
+    fetch('/api/item-list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newList),

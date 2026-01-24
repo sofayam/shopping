@@ -9,7 +9,7 @@ function ListPage() {
 
   // Fetch all data
   useEffect(() => {
-    fetch('http://localhost:3001/api/all-data') // Fetch all data
+    fetch('/api/all-data') // Fetch all data
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -28,7 +28,7 @@ function ListPage() {
 
   // Function to update the item list on the server
   const updateServerItemList = (newList) => { // Renamed for clarity
-    fetch('http://localhost:3001/api/item-list', {
+    fetch('/api/item-list', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

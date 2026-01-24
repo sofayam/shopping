@@ -12,7 +12,7 @@ function ManagementPage() {
 
   const fetchData = () => {
     setLoading(true);
-    fetch('http://localhost:3001/api/all-data')
+    fetch('/api/all-data')
       .then(response => {
         if (!response.ok) throw new Error('Network response was not ok');
         return response.json();
@@ -40,7 +40,7 @@ function ManagementPage() {
     setAppData(prev => ({ ...prev, [key]: data }));
 
     // Update server
-    fetch(`http://localhost:3001/api/data/${fileName}`, {
+    fetch(`/api/data/${fileName}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
