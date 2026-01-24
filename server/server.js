@@ -2,13 +2,16 @@ const express = require('express');
 const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors');
+// const cors = require('cors'); // Removed as frontend and backend will be served from the same origin
 
 const app = express();
-const port = 3001;
+const port = 3001; // Server will now serve both frontend and backend on this port
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Increase limit for potentially large data files
+// app.use(cors()); // Removed
+app.use(express.json({ limit: '10mb' }));
+
+// Serve static files from the React app's build directory
+app.use(express.static(path.join(__dirname, '../client/build')));
 
 const dataDir = path.join(__dirname, 'data');
 
@@ -48,7 +51,7 @@ const EDITABLE_FILES = [
   'items.yaml',
   'shops.yaml',
   'shop_types.yaml',
-  'item_types.yaml', // Added item_types.yaml
+  'item_types.yaml',
   'what_is_where.yaml',
   'item_list.yaml'
 ];
@@ -115,8 +118,13 @@ app.post('/api/item-list', (req, res) => {
   }
 });
 
+// Catch-all for client-side routing - serves the React app's index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+
 
 app.listen(port, () => {
-  console.log(`Server listening on all network interfaces (0.0.0.0) on port ${port}`);
+  console.log(`Server serving React app and API on all network interfaces (0.0.0.0) on port ${port}`);
   console.log(`Access from other devices on your LAN using your machine's IP address (e.g., http://192.168.1.100:${port})`);
 });
