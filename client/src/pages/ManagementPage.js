@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ShopTypeManagement from '../components/ShopTypeManagement';
-import ItemManagement from '../components/ItemManagement'; // Import new component
+import ItemManagement from '../components/ItemManagement';
+import ShopManagement from '../components/ShopManagement';
+import WhatIsWhereManagement from '../components/WhatIsWhereManagement'; // Import new component
 
 function ManagementPage() {
   const [appData, setAppData] = useState(null);
@@ -67,7 +69,20 @@ function ManagementPage() {
             onUpdate={(newData) => handleUpdate('items.yaml', newData)}
           />
           <hr />
-          {/* Other management components will go here */}
+          <ShopManagement
+            shops={appData.shops}
+            shopTypes={appData.shopTypes}
+            whatIsWhere={appData.whatIsWhere}
+            onUpdate={(newData) => handleUpdate('shops.yaml', newData)}
+          />
+          <hr />
+          <WhatIsWhereManagement
+            whatIsWhere={appData.whatIsWhere}
+            items={appData.items} // To get unique item types
+            shopTypes={appData.shopTypes} // To get available shop types
+            onUpdate={(newData) => handleUpdate('what_is_where.yaml', newData)}
+          />
+          <hr />
         </div>
       )}
     </div>
