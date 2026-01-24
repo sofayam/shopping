@@ -18,8 +18,7 @@ COPY --from=client_builder /app/client/build ./client/build
 
 # Copy the server application code and data files
 COPY server/ ./server/
-# Copy documentation files if they are part of the project context
-COPY Datamodel.md Pages.md Implementation.md ./
+# Documentation files are not needed in the container
 
 # Expose the port the server runs on
 EXPOSE 3001
