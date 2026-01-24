@@ -5,11 +5,12 @@ const BLANK_SHOP = { name: '', shop_type: '', aisle_order: '' };
 function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
   const [formState, setFormState] = useState(BLANK_SHOP);
   const [isEditing, setIsEditing] = useState(false);
-  const [itemTypes, setItemTypes] = useState([]);
+  const [availableItemTypes, setAvailableItemTypes] = useState([]);
+  const [nameSuggestions, setNameSuggestions] = useState([]); // New state for name suggestions
 
   useEffect(() => {
     if (whatIsWhere) {
-      setItemTypes(Object.keys(whatIsWhere));
+      setAvailableItemTypes(Object.keys(whatIsWhere));
     }
   }, [whatIsWhere]);
 
@@ -20,16 +21,32 @@ function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'name' && !isEditing && value.length > 0) {
+      const filteredSuggestions = shops
+        .filter(shop => shop.name.toLowerCase().includes(value.toLowerCase()))
+        .map(shop => shop.name);
+      setNameSuggestions(filteredSuggestions);
+    } else {
+      setNameSuggestions([]);
+    }
+  };
+
+  const handleSelectNameSuggestion = (suggestion) => {
+    setFormState(prev => ({ ...prev, name: suggestion }));
+    setNameSuggestions([]);
   };
 
   const handleEditClick = (shop) => {
     setIsEditing(true);
     setFormState({ ...shop, aisle_order: shop.aisle_order ? shop.aisle_order.join(', ') : '' });
+    setNameSuggestions([]); // Clear suggestions when editing
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setFormState(BLANK_SHOP);
+    setNameSuggestions([]); // Clear suggestions on cancel
   };
 
   const handleDelete = (nameToDelete) => {
@@ -39,13 +56,15 @@ function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formState.name || !formState.shop_type) {
+    if (!formState.name.trim() || !formState.shop_type.trim()) {
       alert('Name and Shop Type are required.');
       return;
     }
 
     const newShop = {
       ...formState,
+      name: formState.name.trim(),
+      shop_type: formState.shop_type.trim(),
       aisle_order: formState.aisle_order.split(',').map(s => s.trim()).filter(s => s),
     };
 
@@ -94,26 +113,44 @@ function ShopManagement({ shops, shopTypes, whatIsWhere, onUpdate }) {
 
       <h4>{isEditing ? 'Edit Shop' : 'Add New Shop'}</h4>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Shop Name"
-          value={formState.name}
-          onChange={handleFormChange}
-          disabled={isEditing}
-        />
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <input
+            type="text"
+            name="name"
+            placeholder="Shop Name"
+            value={formState.name}
+            onChange={handleFormChange}
+            disabled={isEditing}
+          />
+          {!isEditing && nameSuggestions.length > 0 && (
+            <ul style={{ listStyleType: 'none', padding: 0, margin: '0', border: '1px solid #ccc', maxHeight: '150px', overflowY: 'auto', background: 'white', position: 'absolute', zIndex: 100, width: '100%' }}>
+              {nameSuggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleSelectNameSuggestion(suggestion)}
+                  style={{ padding: '8px', cursor: 'pointer' }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#e0e0e0'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = 'white'}
+                >
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <select name="shop_type" value={formState.shop_type} onChange={handleFormChange}>
           <option value="">Select Shop Type</option>
           {shopTypes.map(type => <option key={type} value={type}>{type}</option>)}
         </select>
         <textarea
           name="aisle_order"
-          placeholder="Aisle Order (comma-separated item types, e.g., 'fresh veg, dry goods')"
+          placeholder={`Aisle Order (comma-separated item types, e.g., '${availableItemTypes.slice(0, 3).join(', ')}...')`}
           value={formState.aisle_order}
           onChange={handleFormChange}
           rows="3"
           style={{ width: '100%' }}
         ></textarea>
+        <small>Available Item Types: {availableItemTypes.join(', ')}</small>
         <button type="submit">{isEditing ? 'Update Shop' : 'Add Shop'}</button>
         {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}
       </form>

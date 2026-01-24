@@ -6,6 +6,7 @@ function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
   const [formState, setFormState] = useState(BLANK_ITEM);
   const [isEditing, setIsEditing] = useState(false);
   const [itemTypes, setItemTypes] = useState([]);
+  const [nameSuggestions, setNameSuggestions] = useState([]); // New state for name suggestions
 
   useEffect(() => {
     if (whatIsWhere) {
@@ -20,16 +21,32 @@ function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'name' && !isEditing && value.length > 0) {
+      const filteredSuggestions = items
+        .filter(item => item.name.toLowerCase().includes(value.toLowerCase()))
+        .map(item => item.name);
+      setNameSuggestions(filteredSuggestions);
+    } else {
+      setNameSuggestions([]);
+    }
+  };
+
+  const handleSelectNameSuggestion = (suggestion) => {
+    setFormState(prev => ({ ...prev, name: suggestion }));
+    setNameSuggestions([]);
   };
 
   const handleEditClick = (item) => {
     setIsEditing(true);
     setFormState(item);
+    setNameSuggestions([]); // Clear suggestions when editing
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setFormState(BLANK_ITEM);
+    setNameSuggestions([]); // Clear suggestions on cancel
   };
 
   const handleDelete = (nameToDelete) => {
@@ -39,7 +56,7 @@ function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formState.name || !formState.item_type) {
+    if (!formState.name.trim() || !formState.item_type.trim()) {
       alert('Name and Item Type are required.');
       return;
     }
@@ -48,11 +65,11 @@ function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
     if (isEditing) {
       updatedItems = items.map(item => item.name === formState.name ? formState : item);
     } else {
-      if (items.some(item => item.name === formState.name)) {
+      if (items.some(item => item.name === formState.name.trim())) {
         alert('An item with this name already exists.');
         return;
       }
-      updatedItems = [...items, formState];
+      updatedItems = [...items, { ...formState, name: formState.name.trim() }];
     }
     onUpdate(updatedItems);
     handleCancel();
@@ -89,14 +106,31 @@ function ItemManagement({ items, shops, whatIsWhere, onUpdate }) {
 
       <h4>{isEditing ? 'Edit Item' : 'Add New Item'}</h4>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Item Name"
-          value={formState.name}
-          onChange={handleFormChange}
-          disabled={isEditing} // Prevent changing name on edit to preserve key
-        />
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <input
+            type="text"
+            name="name"
+            placeholder="Item Name"
+            value={formState.name}
+            onChange={handleFormChange}
+            disabled={isEditing} // Prevent changing name on edit to preserve key
+          />
+          {!isEditing && nameSuggestions.length > 0 && (
+            <ul style={{ listStyleType: 'none', padding: 0, margin: '0', border: '1px solid #ccc', maxHeight: '150px', overflowY: 'auto', background: 'white', position: 'absolute', zIndex: 100, width: '100%' }}>
+              {nameSuggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleSelectNameSuggestion(suggestion)}
+                  style={{ padding: '8px', cursor: 'pointer' }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#e0e0e0'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = 'white'}
+                >
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <select name="item_type" value={formState.item_type} onChange={handleFormChange}>
           <option value="">Select Type</option>
           {itemTypes.map(type => <option key={type} value={type}>{type}</option>)}
