@@ -1,0 +1,12 @@
+# Associates item types with an ordered list of preferred shop types.
+electronics:
+  - "diy"
+  - "supermarket"
+fresh veg:
+  - "supermarket"
+tools:
+  - "diy"
+dry goods:
+  - "supermarket"
+fixtures:
+  - "diy"

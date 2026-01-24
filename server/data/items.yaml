@@ -1,0 +1,13 @@
+# A list of all possible items that can be bought.
+- name: "AA Batteries"
+  item_type: "electronics"
+  preferred_shop: null
+- name: "Organic Apples"
+  item_type: "fresh veg"
+  preferred_shop: "FreshMart"
+- name: "Heavy Duty Hammer"
+  item_type: "tools"
+  preferred_shop: null
+- name: "Lightbulbs"
+  item_type: "electronics"
+  preferred_shop: "DIY World"

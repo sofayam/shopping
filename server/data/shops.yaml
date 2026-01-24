@@ -1,0 +1,18 @@
+# A list of all shops.
+- name: "SuperValue"
+  shop_type: "supermarket"
+  aisle_order:
+    - "fresh veg"
+    - "dry goods"
+    - "electronics"
+- name: "DIY World"
+  shop_type: "diy"
+  aisle_order:
+    - "tools"
+    - "fixtures"
+    - "electronics"
+- name: "FreshMart"
+  shop_type: "supermarket"
+  aisle_order:
+    - "fresh veg"
+    - "dry goods"
