@@ -8,11 +8,12 @@ const app = express();
 const port = 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for potentially large data files
 
 const dataDir = path.join(__dirname, 'data');
 
-// Helper function to read a YAML file
+// --- Data Reading ---
+
 const readYaml = (fileName) => {
   try {
     const fileContents = fs.readFileSync(path.join(dataDir, fileName), 'utf8');
@@ -23,29 +24,58 @@ const readYaml = (fileName) => {
   }
 };
 
-// API endpoint to get all data
+// --- Data Writing ---
+
+const writeYaml = (fileName, data) => {
+  const yamlStr = yaml.dump(data);
+  fs.writeFileSync(path.join(dataDir, fileName), yamlStr, 'utf8');
+};
+
+// Whitelist of files that can be modified via the API
+const EDITABLE_FILES = [
+  'items.yaml',
+  'shops.yaml',
+  'shop_types.yaml',
+  'what_is_where.yaml',
+  'item_list.yaml'
+];
+
+// --- API Endpoints ---
+
 app.get('/api/all-data', (req, res) => {
-  const data = {
-    items: readYaml('items.yaml'),
-    shops: readYaml('shops.yaml'),
-    shopTypes: readYaml('shop_types.yaml'),
-    whatIsWhere: readYaml('what_is_where.yaml'),
-    itemList: readYaml('item_list.yaml'),
-  };
+  const data = {};
+  EDITABLE_FILES.forEach(file => {
+    // a bit of camelCase for the client
+    const key = file.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
+    data[key] = readYaml(file);
+  });
   res.json(data);
 });
 
-// API endpoint to get the item list
+// Generic endpoint to update a data file
+app.post('/api/data/:fileName', (req, res) => {
+  const { fileName } = req.params;
+  if (!EDITABLE_FILES.includes(fileName)) {
+    return res.status(403).send({ message: 'Forbidden: Invalid file name.' });
+  }
+
+  try {
+    writeYaml(fileName, req.body);
+    res.status(200).send({ message: `${fileName} updated successfully.` });
+  } catch (e) {
+    console.error(`Error writing ${fileName}:`, e);
+    res.status(500).send({ message: `Failed to update ${fileName}.` });
+  }
+});
+
+// Specific legacy endpoints (can be deprecated later)
 app.get('/api/item-list', (req, res) => {
   res.json(readYaml('item_list.yaml'));
 });
 
-// API endpoint to update the item list
 app.post('/api/item-list', (req, res) => {
-  const newItemList = req.body;
   try {
-    const yamlStr = yaml.dump(newItemList);
-    fs.writeFileSync(path.join(dataDir, 'item_list.yaml'), yamlStr, 'utf8');
+    writeYaml('item_list.yaml', req.body);
     res.status(200).send({ message: 'Item list updated successfully.' });
   } catch (e) {
     console.error('Error writing item_list.yaml:', e);
