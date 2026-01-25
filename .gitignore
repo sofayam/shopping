@@ -28,3 +28,7 @@ build/
 # Docker
 .docker/
 .dockerignore
+
+# actual data
+/data_persistence/*.yaml
+
