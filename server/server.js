@@ -13,7 +13,7 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static files from the React app's build directory
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-const dataDir = path.join(__dirname, 'data');
+const dataDir = path.join(__dirname, '../data_persistence');
 
 // --- Data Reading ---
 

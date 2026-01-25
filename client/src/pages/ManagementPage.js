@@ -32,9 +32,10 @@ function ManagementPage() {
   }, []);
 
   const handleUpdate = (fileName, data) => {
+    console.log(`[ManagementPage] Attempting to update ${fileName} with data:`, data);
     // Optimistically update local state
     let key = fileName.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
-    if (fileName === 'item_types.yaml') { // Special key for itemTypesList
+    if (fileName === 'item_types.yaml') {
       key = 'itemTypesList';
     }
     setAppData(prev => ({ ...prev, [key]: data }));
@@ -47,11 +48,17 @@ function ManagementPage() {
     })
     .then(response => {
       if (!response.ok) {
+        console.error(`[ManagementPage] Server update failed for ${fileName}. Status: ${response.status}`);
         // If server update fails, refetch data to revert optimistic update
         fetchData();
+      } else {
+        console.log(`[ManagementPage] Server update successful for ${fileName}.`);
       }
     })
-    .catch(() => fetchData()); // Refetch on error
+    .catch(error => {
+      console.error(`[ManagementPage] Error during fetch for ${fileName}:`, error);
+      fetchData(); // Refetch on error
+    });
   };
 
   return (

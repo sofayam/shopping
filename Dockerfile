@@ -24,8 +24,8 @@ COPY server/ ./server/
 EXPOSE 3001
 
 # Create a volume for data persistence for the YAML files
-# This ensures data in /app/server/data is persisted outside the container
-VOLUME /app/server/data
+# This ensures data in /app/data_persistence is persisted outside the container
+VOLUME /app/data_persistence
 
 # Command to run the application
 CMD ["node", "server/server.js"]

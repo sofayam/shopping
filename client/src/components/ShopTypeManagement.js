@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 function ShopTypeManagement({ shopTypes, onUpdate }) {
   const [newShopType, setNewShopType] = useState('');
 
+  console.log("[ShopTypeManagement] Current shopTypes prop:", shopTypes);
+
   if (!shopTypes) {
     return <p>Loading shop types...</p>;
   }

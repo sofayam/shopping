@@ -8,11 +8,4 @@ services:
     ports:
       - "3001:3001" # Map host port 3001 to container port 3001
     volumes:
-      # Persist the data directory outside the container
-      # This maps a named volume 'shopping_data' to the container's /app/server/data
-      - shopping_data:/app/server/data
-    # Optional: restart policy
-    restart: unless-stopped
-
-volumes:
-  shopping_data: # Define the named volume
+      - ./data_persistence:/app/data_persistence # Bind mount to the new data path
