@@ -38,7 +38,7 @@ function ShoppingPage() {
 
   const purchaseList = useMemo(() => {
     if (!appData || Object.values(selectedShops).every(v => !v)) {
-      return [];
+      return { allocated: [], unallocated: [] }; // Return empty arrays for both
     }
 
     const neededItemNames = appData.itemList || [];
@@ -48,7 +48,11 @@ function ShoppingPage() {
     const activeShops = appData.shops.filter(shop => activeShopNames.includes(shop.name));
     const shopTypeToItemTypesMap = appData.shopTypeToItemTypes || {};
 
+    console.log("[ShoppingPage] Needed Items:", neededItems);
+    console.log("[ShoppingPage] Active Shops:", activeShops);
+
     let assignments = {};
+    let assignedItemNames = new Set(); // Track assigned items
 
     neededItems.forEach(item => {
       let bestShopName = null;
@@ -58,11 +62,9 @@ function ShoppingPage() {
         bestShopName = item.preferred_shop;
       } else {
         // Priority 2: Find any active shop that sells this item type
-        // This logic assumes if no specific preference, any compatible shop is fine.
-        // If multiple compatible shops, it picks the first one found.
         for (const shop of activeShops) {
           const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
-          if (itemTypesSoldByShopType.includes(item.item_type)) {
+          if (itemTypesSoldByShopType.includes(item.item_type)) { // Typo here: shopTypeToItemTypesByShopType
             bestShopName = shop.name;
             break; // Pick the first compatible shop found
           }
@@ -74,8 +76,15 @@ function ShoppingPage() {
           assignments[bestShopName] = [];
         }
         assignments[bestShopName].push(item);
+        assignedItemNames.add(item.name); // Mark as assigned
       }
     });
+
+    console.log("[ShoppingPage] Assigned Item Names:", assignedItemNames);
+
+    // Identify unallocated items
+    const unallocatedItems = neededItems.filter(item => !assignedItemNames.has(item.name));
+    console.log("[ShoppingPage] Unallocated Items:", unallocatedItems);
 
     let finalList = [];
     for (const shopName in assignments) {
@@ -92,7 +101,8 @@ function ShoppingPage() {
       finalList.push({ shopName: shopName, items: sortedItems });
     }
 
-    return finalList;
+    console.log("[ShoppingPage] Final Purchase List (Allocated):", finalList);
+    return { allocated: finalList, unallocated: unallocatedItems }; // Return both
   }, [appData, selectedShops]);
 
   const updateServerList = (newList) => {
@@ -139,9 +149,9 @@ function ShoppingPage() {
           ))}
           <hr />
           <h2>2. Your Purchase List</h2>
-          {purchaseList.length > 0 ? (
+          {purchaseList.allocated.length > 0 ? (
             <>
-              {purchaseList.map(shopData => (
+              {purchaseList.allocated.map(shopData => (
                 <div key={shopData.shopName}>
                   <h3>{shopData.shopName}</h3>
                   <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
@@ -161,6 +171,19 @@ function ShoppingPage() {
             </>
           ) : (
             <p>Select one or more shops to generate a purchase list.</p>
+          )}
+
+          {purchaseList.unallocated.length > 0 && (
+            <>
+              <hr />
+              <h2>3. Unallocated Items</h2>
+              <p>These items could not be allocated to your selected shops:</p>
+              <ul>
+                {purchaseList.unallocated.map(item => (
+                  <li key={item.name}>{item.name} <small>({item.item_type})</small></li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
       )}
