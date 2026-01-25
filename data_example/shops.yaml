@@ -1,0 +1,15 @@
+- name: aldi
+  shop_type: supermarket
+  aisle_order: []
+- name: intermarche
+  shop_type: supermarket
+  aisle_order: []
+- name: Leroy Merlin
+  shop_type: diy
+  aisle_order: []
+- name: Decathlon
+  shop_type: sportswear
+  aisle_order: []
+- name: continente
+  shop_type: supermarket
+  aisle_order: []

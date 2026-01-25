@@ -1,0 +1,84 @@
+- name: broccoli
+  item_type: fresh veg
+  preferred_shop: aldi
+- name: paprika
+  item_type: fresh veg
+  preferred_shop: aldi
+- name: onions
+  item_type: fresh veg
+  preferred_shop: ''
+- name: aubergine
+  item_type: fresh veg
+  preferred_shop: ''
+- name: cauliflower
+  item_type: fresh veg
+  preferred_shop: ''
+- name: sausages
+  item_type: meat
+  preferred_shop: ''
+- name: cheddar
+  item_type: cheese
+  preferred_shop: ''
+- name: Gorgonzola
+  item_type: cheese
+  preferred_shop: ''
+- name: spaghetti
+  item_type: dry goods
+  preferred_shop: ''
+- name: penne
+  item_type: dry goods
+  preferred_shop: ''
+- name: red lentils
+  item_type: dry goods
+  preferred_shop: ''
+- name: broetchen
+  item_type: bakery
+  preferred_shop: ''
+- name: baguette
+  item_type: bakery
+  preferred_shop: ''
+- name: pao rio major
+  item_type: bakery
+  preferred_shop: ''
+- name: digestives
+  item_type: biscuits
+  preferred_shop: ''
+- name: choc digestives
+  item_type: biscuits
+  preferred_shop: ''
+- name: marias
+  item_type: biscuits
+  preferred_shop: ''
+- name: socks
+  item_type: clothes
+  preferred_shop: ''
+- name: boots
+  item_type: shoes
+  preferred_shop: ''
+- name: olive oil
+  item_type: oil
+  preferred_shop: ''
+- name: corn oil
+  item_type: oil
+  preferred_shop: ''
+- name: sesame oil
+  item_type: oil
+  preferred_shop: ''
+- name: peanut oil
+  item_type: oil
+  preferred_shop: aldi
+- name: soy sauce
+  item_type: condiment
+  preferred_shop: ''
+- name: teriyaki sauce
+  item_type: condiment
+  preferred_shop: ''
+- name: tinned tuna
+  item_type: tins
+  preferred_shop: ''
+- name: tinned octopus
+  item_type: tins
+  preferred_shop: continente
+- name: tinned tomatoes
+  item_type: tins
+  preferred_shop: ''
