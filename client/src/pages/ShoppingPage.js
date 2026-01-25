@@ -40,34 +40,43 @@ function ShoppingPage() {
     if (!appData || Object.values(selectedShops).every(v => !v)) {
       return [];
     }
+
     const neededItemNames = appData.itemList || [];
     const allItems = appData.items || [];
     const neededItems = allItems.filter(item => neededItemNames.includes(item.name));
     const activeShopNames = Object.keys(selectedShops).filter(shopName => selectedShops[shopName]);
     const activeShops = appData.shops.filter(shop => activeShopNames.includes(shop.name));
+    const shopTypeToItemTypesMap = appData.shopTypeToItemTypes || {};
+
     let assignments = {};
+
     neededItems.forEach(item => {
-      let bestShop = null;
-      let bestRank = Infinity;
+      let bestShopName = null;
+
+      // Priority 1: Item-specific preferred shop
       if (item.preferred_shop && activeShopNames.includes(item.preferred_shop)) {
-        bestShop = item.preferred_shop;
+        bestShopName = item.preferred_shop;
       } else {
-        const allowedShopTypes = appData.whatIsWhere[item.item_type] || [];
-        activeShops.forEach(shop => {
-          const rank = allowedShopTypes.indexOf(shop.shop_type);
-          if (rank !== -1 && rank < bestRank) {
-            bestRank = rank;
-            bestShop = shop.name;
+        // Priority 2: Find any active shop that sells this item type
+        // This logic assumes if no specific preference, any compatible shop is fine.
+        // If multiple compatible shops, it picks the first one found.
+        for (const shop of activeShops) {
+          const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
+          if (itemTypesSoldByShopType.includes(item.item_type)) {
+            bestShopName = shop.name;
+            break; // Pick the first compatible shop found
           }
-        });
-      }
-      if (bestShop) {
-        if (!assignments[bestShop]) {
-          assignments[bestShop] = [];
         }
-        assignments[bestShop].push(item);
+      }
+
+      if (bestShopName) {
+        if (!assignments[bestShopName]) {
+          assignments[bestShopName] = [];
+        }
+        assignments[bestShopName].push(item);
       }
     });
+
     let finalList = [];
     for (const shopName in assignments) {
       const shop = appData.shops.find(s => s.name === shopName);
@@ -82,6 +91,7 @@ function ShoppingPage() {
       });
       finalList.push({ shopName: shopName, items: sortedItems });
     }
+
     return finalList;
   }, [appData, selectedShops]);
 
@@ -159,3 +169,4 @@ function ShoppingPage() {
 }
 
 export default ShoppingPage;
+

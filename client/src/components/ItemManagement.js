@@ -2,19 +2,12 @@ import React, { useState, useEffect } from 'react';
 
 const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '' };
 
-function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes prop
+function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate }) { // Added shopTypeToItemTypes prop
   const [formState, setFormState] = useState(BLANK_ITEM);
   const [isEditing, setIsEditing] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState([]);
 
-  // No longer need useEffect to derive itemTypes from whatIsWhere
-  // useEffect(() => {
-  //   if (whatIsWhere) {
-  //     setItemTypes(Object.keys(whatIsWhere));
-  //   }
-  // }, [whatIsWhere]);
-
-  if (!items || !shops || !itemTypes) { // Check for itemTypes prop
+  if (!items || !shops || !itemTypes || !shopTypeToItemTypes) { // Check for shopTypeToItemTypes prop
     return <p>Loading item data...</p>;
   }
 
@@ -61,6 +54,22 @@ function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes pr
       return;
     }
 
+    // Validate preferred shop if selected
+    if (formState.preferred_shop) {
+      const selectedShop = shops.find(shop => shop.name === formState.preferred_shop);
+
+      if (!selectedShop) {
+        alert(`Preferred Shop "${formState.preferred_shop}" does not exist.`);
+        return;
+      }
+      
+      const itemTypesSoldByShopType = shopTypeToItemTypes[selectedShop.shop_type] || [];
+      if (!itemTypesSoldByShopType.includes(formState.item_type)) {
+        alert(`Preferred Shop "${selectedShop.name}" (type: ${selectedShop.shop_type}) does not sell Item Type "${formState.item_type}" according to Shop Type to Item Types Sold mapping.`);
+        return;
+      }
+    }
+
     let updatedItems;
     if (isEditing) {
       updatedItems = items.map(item => item.name === formState.name ? formState : item);
@@ -74,6 +83,14 @@ function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes pr
     onUpdate(updatedItems);
     handleCancel();
   };
+
+  // Filter shops for the preferred shop dropdown
+  const filteredPreferredShops = formState.item_type
+    ? shops.filter(shop => {
+        const itemTypesSoldByShopType = shopTypeToItemTypes[shop.shop_type] || [];
+        return itemTypesSoldByShopType.includes(formState.item_type);
+      })
+    : [];
 
   return (
     <section>
@@ -137,7 +154,7 @@ function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes pr
         </select>
         <select name="preferred_shop" value={formState.preferred_shop} onChange={handleFormChange}>
           <option value="">No Preference</option>
-          {shops.map(shop => <option key={shop.name} value={shop.name}>{shop.name}</option>)}
+          {filteredPreferredShops.map(shop => <option key={shop.name} value={shop.name}>{shop.name}</option>)}
         </select>
         <button type="submit">{isEditing ? 'Update Item' : 'Add Item'}</button>
         {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}
@@ -147,3 +164,4 @@ function ItemManagement({ items, shops, itemTypes, onUpdate }) { // itemTypes pr
 }
 
 export default ItemManagement;
+

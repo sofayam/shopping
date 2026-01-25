@@ -13,3 +13,6 @@
 - name: onions
   item_type: fresh veg
   preferred_shop: ''
+- name: thriller
+  item_type: book
+  preferred_shop: readme

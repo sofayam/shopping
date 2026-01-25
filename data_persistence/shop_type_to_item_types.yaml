@@ -1,0 +1,10 @@
+supermarket:
+  - dry goods
+  - fresh veg
+diy:
+  - tools
+  - fixtures
+electronics_store:
+  - electronics
+bookshop:
+  - book

@@ -7,8 +7,8 @@
 ## Shop type (enum)
 - supermarket, diy, clothes
 
-## WhatIsWhere (mapping)
-- Associates an item type with an ordered list of shop types. The order indicates preference, with the first being the most preferred.
+## ShopTypeToItemTypes (mapping)
+- Associates a shop type with a list of item types that it typically sells. This defines the compatibility between shop types and item types.
 
 ## Shop (record) 
 - name

@@ -52,7 +52,8 @@ const EDITABLE_FILES = [
   'shops.yaml',
   'shop_types.yaml',
   'item_types.yaml',
-  'what_is_where.yaml',
+  'shop_type_to_item_types.yaml', // Renamed from item_type_to_shop_type.yaml
+  // 'preferred_shops_by_item_type.yaml', // Removed as per user's request
   'item_list.yaml'
 ];
 
@@ -67,8 +68,10 @@ app.get('/api/all-data', (req, res) => {
     const loadedContent = readYaml(file);
     rawData[file] = loadedContent; // Store raw content
 
-    if (file === 'item_types.yaml') { // Special handling for itemTypes
+    if (file === 'item_types.yaml') {
       data['itemTypesList'] = loadedContent;
+    } else if (file === 'shop_type_to_item_types.yaml') { // New handling for shopTypeToItemTypes
+      data['shopTypeToItemTypes'] = loadedContent;
     } else {
       data[key] = loadedContent;
     }
@@ -83,6 +86,24 @@ app.get('/api/all-data', (req, res) => {
 
   // Update itemList in the data object
   data['itemList'] = validatedItemList;
+
+  // --- Removed Cross-file validation for preferred_shops_by_item_type ---
+
+  // --- Cross-file validation for shops.yaml (aisle_order) ---
+  const allShops = rawData['shops.yaml'] || [];
+  const shopTypeToItemTypesMap = rawData['shop_type_to_item_types.yaml'] || {};
+  const validatedShops = allShops.map(shop => {
+    const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
+    const validatedAisleOrder = (shop.aisle_order || []).filter(itemType => {
+      if (!itemTypesSoldByShopType.includes(itemType)) {
+        console.warn(`[Server Validation] Shop "${shop.name}" (type: ${shop.shop_type}) has item type "${itemType}" in aisle_order which is not sold by its shop type. Removing.`);
+        return false;
+      }
+      return true;
+    });
+    return { ...shop, aisle_order: validatedAisleOrder };
+  });
+  data['shops'] = validatedShops;
 
   res.json(data);
 });

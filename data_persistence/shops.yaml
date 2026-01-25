@@ -1,18 +1,21 @@
-# A list of all shops.
-- name: "SuperValue"
-  shop_type: "supermarket"
+- name: SuperValue
+  shop_type: supermarket
   aisle_order:
-    - "fresh veg"
-    - "dry goods"
-    - "electronics"
-- name: "DIY World"
-  shop_type: "diy"
+    - fresh veg
+    - dry goods
+- name: DIY World
+  shop_type: diy
   aisle_order:
-    - "tools"
-    - "fixtures"
-    - "electronics"
-- name: "FreshMart"
-  shop_type: "supermarket"
+    - tools
+    - fixtures
+- name: FreshMart
+  shop_type: supermarket
   aisle_order:
-    - "fresh veg"
-    - "dry goods"
+    - fresh veg
+    - dry goods
+- name: bookworm
+  shop_type: bookshop
+  aisle_order: []
+- name: readme
+  shop_type: bookshop
+  aisle_order: []

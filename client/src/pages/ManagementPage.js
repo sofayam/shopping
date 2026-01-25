@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ShopTypeManagement from '../components/ShopTypeManagement';
-import ItemTypeManagement from '../components/ItemTypeManagement'; // Import new component
+import ItemTypeManagement from '../components/ItemTypeManagement';
 import ItemManagement from '../components/ItemManagement';
 import ShopManagement from '../components/ShopManagement';
-import WhatIsWhereManagement from '../components/WhatIsWhereManagement';
+// import WhatIsWhereManagement from '../components/WhatIsWhereManagement'; // Removed
+import ShopTypeToItemTypesManagement from '../components/ShopTypeToItemTypesManagement';
 
 function ManagementPage() {
   const [appData, setAppData] = useState(null);
@@ -12,16 +13,22 @@ function ManagementPage() {
 
   const fetchData = () => {
     setLoading(true);
+    console.log("[ManagementPage] Fetching data...");
     fetch('/api/all-data')
       .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) {
+          console.error(`[ManagementPage] Network response not ok: ${response.status}`);
+          throw new Error('Network response was not ok');
+        }
         return response.json();
       })
       .then(data => {
+        console.log("[ManagementPage] Data fetched successfully:", data);
         setAppData(data);
         setLoading(false);
       })
       .catch(error => {
+        console.error("[ManagementPage] Error fetching data:", error);
         setError(error.message);
         setLoading(false);
       });
@@ -37,6 +44,8 @@ function ManagementPage() {
     let key = fileName.replace('.yaml', '').replace(/_([a-z])/g, g => g[1].toUpperCase());
     if (fileName === 'item_types.yaml') {
       key = 'itemTypesList';
+    } else if (fileName === 'shop_type_to_item_types.yaml') {
+      key = 'shopTypeToItemTypes';
     }
     setAppData(prev => ({ ...prev, [key]: data }));
 
@@ -49,7 +58,6 @@ function ManagementPage() {
     .then(response => {
       if (!response.ok) {
         console.error(`[ManagementPage] Server update failed for ${fileName}. Status: ${response.status}`);
-        // If server update fails, refetch data to revert optimistic update
         fetchData();
       } else {
         console.log(`[ManagementPage] Server update successful for ${fileName}.`);
@@ -57,9 +65,13 @@ function ManagementPage() {
     })
     .catch(error => {
       console.error(`[ManagementPage] Error during fetch for ${fileName}:`, error);
-      fetchData(); // Refetch on error
+      fetchData();
     });
   };
+
+  console.log("[ManagementPage] Current appData state:", appData);
+  console.log("[ManagementPage] Current loading state:", loading);
+  console.log("[ManagementPage] Current error state:", error);
 
   return (
     <div>
@@ -74,31 +86,34 @@ function ManagementPage() {
           />
           <hr />
           <ItemTypeManagement
-            itemTypes={appData.itemTypesList} // Use the new itemTypesList
+            itemTypes={appData.itemTypesList}
             onUpdate={(newData) => handleUpdate('item_types.yaml', newData)}
+          />
+          <hr />
+          <ShopTypeToItemTypesManagement
+            shopTypeToItemTypes={appData.shopTypeToItemTypes}
+            shopTypes={appData.shopTypes}
+            itemTypes={appData.itemTypesList}
+            onUpdate={(newData) => handleUpdate('shop_type_to_item_types.yaml', newData)}
           />
           <hr />
           <ItemManagement
             items={appData.items}
             shops={appData.shops}
-            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
+            itemTypes={appData.itemTypesList}
+            shopTypeToItemTypes={appData.shopTypeToItemTypes}
             onUpdate={(newData) => handleUpdate('items.yaml', newData)}
           />
           <hr />
           <ShopManagement
             shops={appData.shops}
             shopTypes={appData.shopTypes}
-            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
+            itemTypes={appData.itemTypesList}
+            shopTypeToItemTypes={appData.shopTypeToItemTypes} // Pass new prop
             onUpdate={(newData) => handleUpdate('shops.yaml', newData)}
           />
           <hr />
-          <WhatIsWhereManagement
-            whatIsWhere={appData.whatIsWhere}
-            itemTypes={appData.itemTypesList} // Pass itemTypes explicitly
-            shopTypes={appData.shopTypes}
-            onUpdate={(newData) => handleUpdate('what_is_where.yaml', newData)}
-          />
-          <hr />
+          {/* WhatIsWhereManagement removed */}
         </div>
       )}
     </div>
@@ -106,3 +121,6 @@ function ManagementPage() {
 }
 
 export default ManagementPage;
+
+
+
