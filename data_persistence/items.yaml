@@ -16,3 +16,6 @@
 - name: thriller
   item_type: book
   preferred_shop: readme
+- name: zabujara
+  item_type: beer
+  preferred_shop: ''

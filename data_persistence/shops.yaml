@@ -3,6 +3,7 @@
   aisle_order:
     - fresh veg
     - dry goods
+    - beer
 - name: DIY World
   shop_type: diy
   aisle_order:
@@ -18,4 +19,7 @@
   aisle_order: []
 - name: readme
   shop_type: bookshop
+  aisle_order: []
+- name: sparky
+  shop_type: electronics_store
   aisle_order: []
