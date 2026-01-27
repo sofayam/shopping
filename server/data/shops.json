@@ -1,0 +1,36 @@
+{
+  "supermarket": {
+    "name": "Supermarket",
+    "itemTypes": [
+      "dairy",
+      "bakery",
+      "veg",
+      "household",
+      "dry"
+    ],
+    "shops": [
+      "Tesco",
+      "Waitrose"
+    ]
+  },
+  "diy": {
+    "name": "DIY Store",
+    "itemTypes": [
+      "fuel",
+      "tools",
+      "paint"
+    ],
+    "shops": [
+      "maxmat"
+    ]
+  },
+  "clothing": {
+    "name": "clothing",
+    "itemTypes": [
+      "clothes"
+    ],
+    "shops": [
+      "canda"
+    ]
+  }
+}

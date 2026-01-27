@@ -15,6 +15,9 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 
 const dataDir = path.join(__dirname, '../data_persistence');
 
+// --- Validation State ---
+let lastValidationResult = null;
+
 // --- Data Reading ---
 
 const readYaml = (fileName) => {
@@ -57,7 +60,146 @@ const EDITABLE_FILES = [
   'item_list.yaml'
 ];
 
+// --- Validation Logic ---
+
+/**
+ * Validates all YAML files for cross-file consistency
+ * Returns an object with issues array and valid boolean
+ */
+const performValidation = () => {
+  console.log('[Server] Starting validation of YAML files...');
+  
+  const issues = [];
+  const rawData = {};
+  
+  // Read all files
+  EDITABLE_FILES.forEach(file => {
+    rawData[file] = readYaml(file);
+  });
+
+  const items = rawData['items.yaml'] || [];
+  const shops = rawData['shops.yaml'] || [];
+  const shopTypes = rawData['shop_types.yaml'] || [];
+  const itemTypes = rawData['item_types.yaml'] || [];
+  const shopTypeToItemTypes = rawData['shop_type_to_item_types.yaml'] || {};
+  const itemList = rawData['item_list.yaml'] || [];
+
+  // Debug logging
+  console.log('[Server] Loaded itemTypes:', itemTypes);
+  console.log('[Server] Loaded shopTypes:', shopTypes);
+
+  // Build sets for quick lookup
+  // Handle both formats: objects with .name property and simple strings
+  const validItemNames = new Set(items.map(item => item.name));
+  const validShopNames = new Set(shops.map(shop => shop.name));
+  const validShopTypeNames = new Set(shopTypes.map(st => typeof st === 'string' ? st : st.name));
+  const validItemTypeNames = new Set(itemTypes.map(it => typeof it === 'string' ? it : it.name));
+
+  console.log('[Server] Valid item type names:', Array.from(validItemTypeNames));
+  console.log('[Server] Valid shop type names:', Array.from(validShopTypeNames));
+
+  // Validate items.yaml
+  items.forEach(item => {
+    if (!item.name) issues.push('items.yaml: Item missing name field');
+    if (!item.item_type) issues.push(`items.yaml: Item "${item.name}" missing item_type field`);
+    else if (!validItemTypeNames.has(item.item_type)) {
+      issues.push(`items.yaml: Item "${item.name}" references unknown item_type "${item.item_type}"`);
+    }
+    // Only validate preferred_shop if it's not empty
+    if (item.preferred_shop && item.preferred_shop.trim() && !validShopNames.has(item.preferred_shop)) {
+      issues.push(`items.yaml: Item "${item.name}" has preferred_shop "${item.preferred_shop}" that doesn't exist`);
+    }
+  });
+
+  // Validate shops.yaml
+  shops.forEach(shop => {
+    if (!shop.name) issues.push('shops.yaml: Shop missing name field');
+    if (!shop.shop_type) issues.push(`shops.yaml: Shop "${shop.name}" missing shop_type field`);
+    else if (!validShopTypeNames.has(shop.shop_type)) {
+      issues.push(`shops.yaml: Shop "${shop.name}" references unknown shop_type "${shop.shop_type}"`);
+    }
+    
+    // Validate aisle_order
+    if (shop.aisle_order && Array.isArray(shop.aisle_order)) {
+      const validItemTypesForShop = shopTypeToItemTypes[shop.shop_type] || [];
+      shop.aisle_order.forEach(itemType => {
+        if (!validItemTypeNames.has(itemType)) {
+          issues.push(`shops.yaml: Shop "${shop.name}" aisle_order references unknown item_type "${itemType}"`);
+        } else if (!validItemTypesForShop.includes(itemType)) {
+          issues.push(`shops.yaml: Shop "${shop.name}" aisle_order includes "${itemType}" which is not sold by shop_type "${shop.shop_type}"`);
+        }
+      });
+    }
+  });
+
+  // Validate shop_types.yaml (can be strings or objects with name field)
+  shopTypes.forEach((shopType, idx) => {
+    const typeName = typeof shopType === 'string' ? shopType : shopType.name;
+    if (!typeName || typeName.trim() === '') {
+      issues.push('shop_types.yaml: ShopType at index ' + idx + ' is empty');
+    }
+  });
+
+  // Validate item_types.yaml (can be strings or objects with name field)
+  itemTypes.forEach((itemType, idx) => {
+    const typeName = typeof itemType === 'string' ? itemType : itemType.name;
+    if (!typeName || typeName.trim() === '') {
+      issues.push('item_types.yaml: ItemType at index ' + idx + ' is empty');
+    }
+  });
+
+  // Validate shop_type_to_item_types.yaml
+  Object.entries(shopTypeToItemTypes).forEach(([shopType, itemTypesList]) => {
+    if (!validShopTypeNames.has(shopType)) {
+      issues.push(`shop_type_to_item_types.yaml: References unknown shop_type "${shopType}"`);
+    }
+    if (Array.isArray(itemTypesList)) {
+      itemTypesList.forEach(itemType => {
+        if (!validItemTypeNames.has(itemType)) {
+          issues.push(`shop_type_to_item_types.yaml: shop_type "${shopType}" references unknown item_type "${itemType}"`);
+        }
+      });
+    }
+  });
+
+  // Validate item_list.yaml
+  itemList.forEach(itemName => {
+    if (!validItemNames.has(itemName)) {
+      issues.push(`item_list.yaml: Item "${itemName}" is not defined in items.yaml`);
+    }
+  });
+
+  const isValid = issues.length === 0;
+  
+  if (isValid) {
+    console.log('[Server] Validation complete: All files are valid ✓');
+  } else {
+    console.warn('[Server] Validation complete: Found', issues.length, 'issue(s)');
+    issues.forEach(issue => console.warn(`  - ${issue}`));
+  }
+
+  lastValidationResult = {
+    timestamp: new Date().toISOString(),
+    issues,
+    valid: isValid
+  };
+
+  return lastValidationResult;
+};
+
+
 // --- API Endpoints ---
+
+// Validation endpoint - returns current validation status and can trigger re-validation
+app.get('/api/validate', (req, res) => {
+  const result = performValidation();
+  res.json(result);
+});
+
+// Endpoint to check validation status without re-running validation
+app.get('/api/validation-status', (req, res) => {
+  res.json(lastValidationResult || { valid: true, issues: [], timestamp: null });
+});
 
 app.get('/api/all-data', (req, res) => {
   const data = {};
@@ -148,4 +290,8 @@ app.get('*', (req, res) => {
 app.listen(port, () => {
   console.log(`Server serving React app and API on all network interfaces (0.0.0.0) on port ${port}`);
   console.log(`Access from other devices on your LAN using your machine's IP address (e.g., http://192.168.1.100:${port})`);
+  
+  // Perform validation on startup
+  console.log('[Server] Performing validation on startup...');
+  performValidation();
 });
