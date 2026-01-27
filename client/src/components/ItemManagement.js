@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '' };
+const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '', only_shop: '' };
 
 function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate }) { // Added shopTypeToItemTypes prop
   const [formState, setFormState] = useState(BLANK_ITEM);
@@ -55,7 +55,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
     }
 
     // Validate preferred shop if selected
-    if (formState.preferred_shop) {
+    if (formState.preferred_shop && formState.preferred_shop.trim()) {
       const selectedShop = shops.find(shop => shop.name === formState.preferred_shop);
 
       if (!selectedShop) {
@@ -66,6 +66,22 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
       const itemTypesSoldByShopType = shopTypeToItemTypes[selectedShop.shop_type] || [];
       if (!itemTypesSoldByShopType.includes(formState.item_type)) {
         alert(`Preferred Shop "${selectedShop.name}" (type: ${selectedShop.shop_type}) does not sell Item Type "${formState.item_type}" according to Shop Type to Item Types Sold mapping.`);
+        return;
+      }
+    }
+
+    // Validate only_shop if selected
+    if (formState.only_shop && formState.only_shop.trim()) {
+      const selectedShop = shops.find(shop => shop.name === formState.only_shop);
+
+      if (!selectedShop) {
+        alert(`Only Shop "${formState.only_shop}" does not exist.`);
+        return;
+      }
+      
+      const itemTypesSoldByShopType = shopTypeToItemTypes[selectedShop.shop_type] || [];
+      if (!itemTypesSoldByShopType.includes(formState.item_type)) {
+        alert(`Only Shop "${selectedShop.name}" (type: ${selectedShop.shop_type}) does not sell Item Type "${formState.item_type}" according to Shop Type to Item Types Sold mapping.`);
         return;
       }
     }
@@ -92,6 +108,14 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
       })
     : [];
 
+  // Filter shops for the only shop dropdown (same logic as preferred shop)
+  const filteredOnlyShops = formState.item_type
+    ? shops.filter(shop => {
+        const itemTypesSoldByShopType = shopTypeToItemTypes[shop.shop_type] || [];
+        return itemTypesSoldByShopType.includes(formState.item_type);
+      })
+    : [];
+
   return (
     <section>
       <h3>Items</h3>
@@ -101,6 +125,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
             <th>Name</th>
             <th>Item Type</th>
             <th>Preferred Shop</th>
+            <th>Only Shop</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -110,6 +135,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
               <td>{item.name}</td>
               <td>{item.item_type}</td>
               <td>{item.preferred_shop || 'None'}</td>
+              <td>{item.only_shop || 'None'}</td>
               <td>
                 <button onClick={() => handleEditClick(item)}>Edit</button>
                 <button onClick={() => handleDelete(item.name)}>Delete</button>
@@ -155,6 +181,10 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
         <select name="preferred_shop" value={formState.preferred_shop} onChange={handleFormChange}>
           <option value="">No Preference</option>
           {filteredPreferredShops.map(shop => <option key={shop.name} value={shop.name}>{shop.name}</option>)}
+        </select>
+        <select name="only_shop" value={formState.only_shop} onChange={handleFormChange}>
+          <option value="">No Restriction</option>
+          {filteredOnlyShops.map(shop => <option key={shop.name} value={shop.name}>{shop.name}</option>)}
         </select>
         <button type="submit">{isEditing ? 'Update Item' : 'Add Item'}</button>
         {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}

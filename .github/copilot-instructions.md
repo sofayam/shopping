@@ -8,7 +8,9 @@ This is a full-stack Progressive Web App (PWA) for shopping list management. The
 - **Core entities**: Items, Shops, ItemTypes, ShopTypes
 - **Key mapping**: `shop_type_to_item_types.yaml` defines which item types are sold in which shop types (many-to-many with explicit order)
 - **User data**: Master `itemList` (persistent shopping needs) vs temporary `purchaseList` (per-trip; not persisted)
-- **Preferred shop**: Optional preference on Items; used as tiebreaker when multiple shops have the same item type
+- **Item shop preferences**: 
+  - `preferred_shop` (optional): Preferred shop as tiebreaker when multiple shops have the same item type
+  - `only_shop` (optional): Restricts item to be bought ONLY from this specific shop; if not selected, item is unallocated
 
 ### Folder Structure
 - `server/` - Node.js/Express backend, serves static files + API
@@ -64,7 +66,8 @@ docker-compose up --build  # Builds both frontend and backend, runs server on :3
 ### ShoppingPage Logic (See ShoppingPage.js, lines 46-75)
 1. User selects shops
 2. System filters itemList to items defined in items.yaml
-3. For each item, finds best shop using:
+3. For each item, finds best shop using priority order:
+   - Priority 0: Item's `only_shop` (if set, MUST be selected or item unallocated)
    - Priority 1: Item's `preferred_shop` (if selected)
    - Priority 2: First selected shop that sells the item type (via shopTypeToItemTypes)
 4. Sorts items within shop by `aisle_order` (or unordered if not in order)
@@ -83,6 +86,7 @@ docker-compose up --build  # Builds both frontend and backend, runs server on :3
 - **CORS removed**: Frontend and backend share same origin, so no CORS middleware needed
 - **Manual build step**: React build must be run before starting server; changes to client/ require rebuild
 - **Data files must exist**: Empty/missing YAML files default to `{}` or `[]`; create files in data_persistence if needed
+- **only_shop is exclusive**: If an item has `only_shop` set, it can ONLY be purchased from that shop. No fallback, no alternatives. If that shop is not selected, the item is unallocated.
 
 ## Key Files to Review
 

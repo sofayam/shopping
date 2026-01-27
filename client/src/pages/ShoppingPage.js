@@ -57,16 +57,24 @@ function ShoppingPage() {
     neededItems.forEach(item => {
       let bestShopName = null;
 
-      // Priority 1: Item-specific preferred shop
-      if (item.preferred_shop && activeShopNames.includes(item.preferred_shop)) {
-        bestShopName = item.preferred_shop;
+      // Priority 0: Item-specific only_shop (if set, must be selected or item is unallocated)
+      if (item.only_shop && item.only_shop.trim()) {
+        if (activeShopNames.includes(item.only_shop)) {
+          bestShopName = item.only_shop;
+        }
+        // If only_shop is set but not selected, item remains unallocated
       } else {
-        // Priority 2: Find any active shop that sells this item type
-        for (const shop of activeShops) {
-          const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
-          if (itemTypesSoldByShopType.includes(item.item_type)) { // Typo here: shopTypeToItemTypesByShopType
-            bestShopName = shop.name;
-            break; // Pick the first compatible shop found
+        // Priority 1: Item-specific preferred shop
+        if (item.preferred_shop && item.preferred_shop.trim() && activeShopNames.includes(item.preferred_shop)) {
+          bestShopName = item.preferred_shop;
+        } else {
+          // Priority 2: Find any active shop that sells this item type
+          for (const shop of activeShops) {
+            const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
+            if (itemTypesSoldByShopType.includes(item.item_type)) {
+              bestShopName = shop.name;
+              break; // Pick the first compatible shop found
+            }
           }
         }
       }

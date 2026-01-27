@@ -105,6 +105,10 @@ const performValidation = () => {
     else if (!validItemTypeNames.has(item.item_type)) {
       issues.push(`items.yaml: Item "${item.name}" references unknown item_type "${item.item_type}"`);
     }
+    // Only validate only_shop if it's not empty
+    if (item.only_shop && item.only_shop.trim() && !validShopNames.has(item.only_shop)) {
+      issues.push(`items.yaml: Item "${item.name}" has only_shop "${item.only_shop}" that doesn't exist`);
+    }
     // Only validate preferred_shop if it's not empty
     if (item.preferred_shop && item.preferred_shop.trim() && !validShopNames.has(item.preferred_shop)) {
       issues.push(`items.yaml: Item "${item.name}" has preferred_shop "${item.preferred_shop}" that doesn't exist`);
