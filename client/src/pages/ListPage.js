@@ -51,8 +51,18 @@ function ListPage() {
 
     if (appData && appData.items && value.length > 0) {
       const filteredSuggestions = appData.items
-        .filter(item => item.name.toLowerCase().includes(value.toLowerCase()))
-        .map(item => item.name);
+        .filter(item => {
+          // Check if value matches name
+          if (item.name.toLowerCase().includes(value.toLowerCase())) {
+            return true;
+          }
+          // Check if value matches any nickname
+          if (item.nicknames && Array.isArray(item.nicknames)) {
+            return item.nicknames.some(nick => nick.toLowerCase().includes(value.toLowerCase()));
+          }
+          return false;
+        })
+        .map(item => item.name); // Always show canonical name
       setSuggestions(filteredSuggestions);
     } else {
       setSuggestions([]);

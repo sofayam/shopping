@@ -11,6 +11,7 @@ This is a full-stack Progressive Web App (PWA) for shopping list management. The
 - **Item shop preferences**: 
   - `preferred_shop` (optional): Preferred shop as tiebreaker when multiple shops have the same item type
   - `only_shop` (optional): Restricts item to be bought ONLY from this specific shop; if not selected, item is unallocated
+- **Item nicknames** (optional): Array of alternative names for autocomplete in ListPage; only canonical name appears in itemList
 
 ### Folder Structure
 - `server/` - Node.js/Express backend, serves static files + API

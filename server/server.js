@@ -84,19 +84,12 @@ const performValidation = () => {
   const shopTypeToItemTypes = rawData['shop_type_to_item_types.yaml'] || {};
   const itemList = rawData['item_list.yaml'] || [];
 
-  // Debug logging
-  console.log('[Server] Loaded itemTypes:', itemTypes);
-  console.log('[Server] Loaded shopTypes:', shopTypes);
-
   // Build sets for quick lookup
   // Handle both formats: objects with .name property and simple strings
   const validItemNames = new Set(items.map(item => item.name));
   const validShopNames = new Set(shops.map(shop => shop.name));
   const validShopTypeNames = new Set(shopTypes.map(st => typeof st === 'string' ? st : st.name));
   const validItemTypeNames = new Set(itemTypes.map(it => typeof it === 'string' ? it : it.name));
-
-  console.log('[Server] Valid item type names:', Array.from(validItemTypeNames));
-  console.log('[Server] Valid shop type names:', Array.from(validShopTypeNames));
 
   // Validate items.yaml
   items.forEach(item => {
@@ -112,6 +105,14 @@ const performValidation = () => {
     // Only validate preferred_shop if it's not empty
     if (item.preferred_shop && item.preferred_shop.trim() && !validShopNames.has(item.preferred_shop)) {
       issues.push(`items.yaml: Item "${item.name}" has preferred_shop "${item.preferred_shop}" that doesn't exist`);
+    }
+    // Validate nicknames if present
+    if (item.nicknames && Array.isArray(item.nicknames)) {
+      item.nicknames.forEach((nick, idx) => {
+        if (!nick || nick.trim() === '') {
+          issues.push(`items.yaml: Item "${item.name}" has empty nickname at index ${idx}`);
+        }
+      });
     }
   });
 
@@ -166,10 +167,121 @@ const performValidation = () => {
     }
   });
 
+  // Check for orphan item types (defined but not assigned to any shop type)
+  const assignedItemTypes = new Set();
+  Object.values(shopTypeToItemTypes).forEach(itemTypesList => {
+    if (Array.isArray(itemTypesList)) {
+      itemTypesList.forEach(itemType => assignedItemTypes.add(itemType));
+    }
+  });
+  
+  validItemTypeNames.forEach(itemType => {
+    if (!assignedItemTypes.has(itemType)) {
+      issues.push(`item_types.yaml: Item type "${itemType}" is not assigned to any shop type in shop_type_to_item_types.yaml`);
+    }
+  });
+
   // Validate item_list.yaml
   itemList.forEach(itemName => {
     if (!validItemNames.has(itemName)) {
       issues.push(`item_list.yaml: Item "${itemName}" is not defined in items.yaml`);
+    }
+  });
+
+  // Check for duplicate items (case-insensitive)
+  const itemNameLower = new Map();
+  items.forEach(item => {
+    const lower = item.name.toLowerCase();
+    if (itemNameLower.has(lower)) {
+      issues.push(`items.yaml: Duplicate item name (case-insensitive) "${item.name}" - already exists as "${itemNameLower.get(lower)}"`);
+    } else {
+      itemNameLower.set(lower, item.name);
+    }
+  });
+
+  // Check for duplicate shops (case-insensitive)
+  const shopNameLower = new Map();
+  shops.forEach(shop => {
+    const lower = shop.name.toLowerCase();
+    if (shopNameLower.has(lower)) {
+      issues.push(`shops.yaml: Duplicate shop name (case-insensitive) "${shop.name}" - already exists as "${shopNameLower.get(lower)}"`);
+    } else {
+      shopNameLower.set(lower, shop.name);
+    }
+  });
+
+  // Check for duplicate item types (case-insensitive)
+  const itemTypeLower = new Map();
+  itemTypes.forEach((itemType, idx) => {
+    const typeName = typeof itemType === 'string' ? itemType : itemType.name;
+    const lower = typeName.toLowerCase();
+    if (itemTypeLower.has(lower)) {
+      issues.push(`item_types.yaml: Duplicate item type (case-insensitive) "${typeName}" at index ${idx} - already exists as "${itemTypeLower.get(lower)}"`);
+    } else {
+      itemTypeLower.set(lower, typeName);
+    }
+  });
+
+  // Check for duplicate shop types (case-insensitive)
+  const shopTypeLower = new Map();
+  shopTypes.forEach((shopType, idx) => {
+    const typeName = typeof shopType === 'string' ? shopType : shopType.name;
+    const lower = typeName.toLowerCase();
+    if (shopTypeLower.has(lower)) {
+      issues.push(`shop_types.yaml: Duplicate shop type (case-insensitive) "${typeName}" at index ${idx} - already exists as "${shopTypeLower.get(lower)}"`);
+    } else {
+      shopTypeLower.set(lower, typeName);
+    }
+  });
+
+  // Check for orphan shop types (defined but not used by any shop)
+  const usedShopTypes = new Set(shops.map(shop => shop.shop_type));
+  validShopTypeNames.forEach(shopType => {
+    if (!usedShopTypes.has(shopType)) {
+      issues.push(`shop_types.yaml: Shop type "${shopType}" is not used by any shop in shops.yaml`);
+    }
+  });
+
+  // Check for shop types with no item types assigned
+  validShopTypeNames.forEach(shopType => {
+    const itemTypesForShop = shopTypeToItemTypes[shopType];
+    if (!itemTypesForShop || !Array.isArray(itemTypesForShop) || itemTypesForShop.length === 0) {
+      issues.push(`shop_type_to_item_types.yaml: Shop type "${shopType}" has no item types assigned`);
+    }
+  });
+
+  // Check for nickname conflicts and duplicates
+  items.forEach(item => {
+    if (item.nicknames && Array.isArray(item.nicknames)) {
+      const seenNicknames = new Set();
+      item.nicknames.forEach((nick, idx) => {
+        // Check for duplicate nicknames in same item
+        if (seenNicknames.has(nick.toLowerCase())) {
+          issues.push(`items.yaml: Item "${item.name}" has duplicate nickname "${nick}"`);
+        } else {
+          seenNicknames.add(nick.toLowerCase());
+        }
+        // Check if nickname conflicts with item name
+        if (nick.toLowerCase() === item.name.toLowerCase()) {
+          issues.push(`items.yaml: Item "${item.name}" has nickname "${nick}" that matches its own canonical name`);
+        }
+        // Check if nickname matches another item's name
+        items.forEach(otherItem => {
+          if (otherItem.name !== item.name && nick.toLowerCase() === otherItem.name.toLowerCase()) {
+            issues.push(`items.yaml: Item "${item.name}" has nickname "${nick}" that matches another item's name "${otherItem.name}"`);
+          }
+        });
+      });
+    }
+  });
+
+  // Check for duplicate items in itemList
+  const seenInList = new Set();
+  itemList.forEach(itemName => {
+    if (seenInList.has(itemName)) {
+      issues.push(`item_list.yaml: Duplicate item "${itemName}" in list`);
+    } else {
+      seenInList.add(itemName);
     }
   });
 

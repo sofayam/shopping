@@ -163,15 +163,27 @@ function ShoppingPage() {
                 <div key={shopData.shopName}>
                   <h3>{shopData.shopName}</h3>
                   <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
-                    {shopData.items.map(item => (
-                      <li key={item.name} style={{ textDecoration: tickedItems[item.name] ? 'line-through' : 'none' }}>
-                        <label>
-                          <input type="checkbox" name={item.name} checked={tickedItems[item.name] || false} onChange={handleTickChange} />
-                          {item.name} <small>({item.item_type})</small>
-                        </label>
-                        <button onClick={() => handleDefer(item.name)} style={{ marginLeft: '10px', fontSize: '0.8em' }}>Defer</button>
-                      </li>
-                    ))}
+                    {shopData.items.map(item => {
+                      // Determine if item is in preferred shop
+                      const isInPreferredShop = item.preferred_shop && item.preferred_shop.trim() === shopData.shopName;
+                      let preferenceIndicator = null;
+                      
+                      if (isInPreferredShop) {
+                        preferenceIndicator = '👍';
+                      } else if (item.preferred_shop && item.preferred_shop.trim()) {
+                        preferenceIndicator = `☹️ (${item.preferred_shop} preferred)`;
+                      }
+                      
+                      return (
+                        <li key={item.name} style={{ textDecoration: tickedItems[item.name] ? 'line-through' : 'none' }}>
+                          <label>
+                            <input type="checkbox" name={item.name} checked={tickedItems[item.name] || false} onChange={handleTickChange} />
+                            {item.name} {preferenceIndicator && <span style={{ marginLeft: '5px', fontSize: '0.9em' }}>{preferenceIndicator}</span>} <small>({item.item_type})</small>
+                          </label>
+                          <button onClick={() => handleDefer(item.name)} style={{ marginLeft: '10px', fontSize: '0.8em' }}>Defer</button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
@@ -187,9 +199,36 @@ function ShoppingPage() {
               <h2>3. Unallocated Items</h2>
               <p>These items could not be allocated to your selected shops:</p>
               <ul>
-                {purchaseList.unallocated.map(item => (
-                  <li key={item.name}>{item.name} <small>({item.item_type})</small></li>
-                ))}
+                {purchaseList.unallocated.map(item => {
+                  // Determine suggested shop
+                  let suggestion = null;
+                  const shopTypeToItemTypesMap = appData.shopTypeToItemTypes || {};
+                  
+                  if (item.only_shop && item.only_shop.trim()) {
+                    // If only_shop is set, suggest that shop
+                    suggestion = `(select ${item.only_shop})`;
+                  } else if (item.preferred_shop && item.preferred_shop.trim()) {
+                    // If preferred_shop is set, suggest that
+                    suggestion = `(try ${item.preferred_shop})`;
+                  } else {
+                    // Find first shop that sells this item type
+                    const shopWithItemType = appData.shops.find(shop => {
+                      const itemTypesSoldByShopType = shopTypeToItemTypesMap[shop.shop_type] || [];
+                      return itemTypesSoldByShopType.includes(item.item_type);
+                    });
+                    if (shopWithItemType) {
+                      suggestion = `(available at ${shopWithItemType.name})`;
+                    } else {
+                      suggestion = '(no shop sells this item type)';
+                    }
+                  }
+                  
+                  return (
+                    <li key={item.name}>
+                      {item.name} <small>({item.item_type})</small> {suggestion && <span style={{ marginLeft: '8px', color: '#666', fontSize: '0.9em' }}>{suggestion}</span>}
+                    </li>
+                  );
+                })}
               </ul>
             </>
           )}

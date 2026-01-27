@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '', only_shop: '' };
+const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '', only_shop: '', nicknames: [] };
 
 function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate }) { // Added shopTypeToItemTypes prop
   const [formState, setFormState] = useState(BLANK_ITEM);
   const [isEditing, setIsEditing] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [nicknameInput, setNicknameInput] = useState('');
 
   if (!items || !shops || !itemTypes || !shopTypeToItemTypes) { // Check for shopTypeToItemTypes prop
     return <p>Loading item data...</p>;
@@ -40,6 +41,19 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
     setIsEditing(false);
     setFormState(BLANK_ITEM);
     setNameSuggestions([]); // Clear suggestions on cancel
+    setNicknameInput('');
+  };
+
+  const handleAddNickname = () => {
+    if (!nicknameInput.trim()) return;
+    const newNicknames = [...(formState.nicknames || []), nicknameInput.trim()];
+    setFormState(prev => ({ ...prev, nicknames: newNicknames }));
+    setNicknameInput('');
+  };
+
+  const handleRemoveNickname = (index) => {
+    const newNicknames = formState.nicknames.filter((_, i) => i !== index);
+    setFormState(prev => ({ ...prev, nicknames: newNicknames }));
   };
 
   const handleDelete = (nameToDelete) => {
@@ -124,6 +138,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
           <tr>
             <th>Name</th>
             <th>Item Type</th>
+            <th>Nicknames</th>
             <th>Preferred Shop</th>
             <th>Only Shop</th>
             <th>Actions</th>
@@ -134,6 +149,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
             <tr key={item.name}>
               <td>{item.name}</td>
               <td>{item.item_type}</td>
+              <td>{item.nicknames && item.nicknames.length > 0 ? item.nicknames.join(', ') : 'None'}</td>
               <td>{item.preferred_shop || 'None'}</td>
               <td>{item.only_shop || 'None'}</td>
               <td>
@@ -186,8 +202,37 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
           <option value="">No Restriction</option>
           {filteredOnlyShops.map(shop => <option key={shop.name} value={shop.name}>{shop.name}</option>)}
         </select>
-        <button type="submit">{isEditing ? 'Update Item' : 'Add Item'}</button>
-        {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}
+        
+        <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+          <h5 style={{ margin: '0 0 10px 0' }}>Nicknames (for autocomplete)</h5>
+          <div>
+            <input
+              type="text"
+              value={nicknameInput}
+              onChange={(e) => setNicknameInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNickname())}
+              placeholder="Add a nickname"
+            />
+            <button type="button" onClick={handleAddNickname} style={{ marginLeft: '5px' }}>
+              Add Nickname
+            </button>
+          </div>
+          {formState.nicknames && formState.nicknames.length > 0 && (
+            <ul style={{ marginTop: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '4px', listStyleType: 'none' }}>
+              {formState.nicknames.map((nick, idx) => (
+                <li key={idx} style={{ marginBottom: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{nick}</span>
+                  <button type="button" onClick={() => handleRemoveNickname(idx)} style={{ marginLeft: '10px', padding: '2px 8px' }}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <button type="submit" style={{ marginTop: '15px' }}>{isEditing ? 'Update Item' : 'Add Item'}</button>
+        {isEditing && <button type="button" onClick={handleCancel} style={{ marginLeft: '5px' }}>Cancel</button>}
       </form>
     </section>
   );
