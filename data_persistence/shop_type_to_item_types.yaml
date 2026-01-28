@@ -8,6 +8,10 @@ supermarket:
   - biscuits
   - oil
   - tins
+  - toiletries
+  - condiment
 sportswear:
   - clothes
   - shoes
+diy:
+  - tools

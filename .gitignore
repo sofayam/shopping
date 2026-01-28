@@ -29,6 +29,4 @@ build/
 .docker/
 .dockerignore
 
-# actual data
-data_persistence/*.yaml
 

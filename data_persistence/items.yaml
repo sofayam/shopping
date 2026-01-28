@@ -73,12 +73,27 @@
 - name: teriyaki sauce
   item_type: condiment
   preferred_shop: ''
+  only_shop: continente
 - name: tinned tuna
   item_type: tins
   preferred_shop: ''
 - name: tinned octopus
   item_type: tins
-  preferred_shop: continente
+  preferred_shop: ''
+  only_shop: continente
 - name: tinned tomatoes
   item_type: tins
   preferred_shop: ''
+  nicknames:
+    - tintoms
+- name: soap
+  item_type: toiletries
+  preferred_shop: ''
+  only_shop: ''
+  nicknames:
+    - seife
+- name: deo
+  item_type: toiletries
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
