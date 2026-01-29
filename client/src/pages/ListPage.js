@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AddItemWizard from '../components/AddItemWizard';
 
 function ListPage() {
   const [appData, setAppData] = useState(null); // New state for all data
@@ -6,6 +7,8 @@ function ListPage() {
   const [error, setError] = useState(null);
   const [newItem, setNewItem] = useState('');
   const [suggestions, setSuggestions] = useState([]); // New state for autocomplete suggestions
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardItemName, setWizardItemName] = useState('');
 
   // Fetch all data
   useEffect(() => {
@@ -83,23 +86,55 @@ function ListPage() {
       return;
     }
 
-    const itemExistsInModel = appData.items.some(item => item.name === newItem.trim());
-    if (!itemExistsInModel) {
-      alert('Item must be defined in the data model (Management Page -> Items) before adding to the list.');
-      return;
-    }
-
     const currentItemList = appData.itemList || [];
     if (currentItemList.includes(newItem.trim())) { // Prevent adding duplicates to the list
       alert('Item is already in the list.');
       return;
     }
 
+    const itemExistsInModel = appData.items.some(item => item.name === newItem.trim());
+    
+    if (!itemExistsInModel) {
+      // Item doesn't exist, open wizard to create it
+      setWizardItemName(newItem.trim());
+      setWizardOpen(true);
+      return;
+    }
+
+    // Item exists, add it to list
     const newList = [...currentItemList, newItem.trim()];
     setAppData(prev => ({ ...prev, itemList: newList })); // Update local appData
     updateServerItemList(newList); // Update server
     setNewItem('');
     setSuggestions([]); // Clear suggestions after adding
+  };
+
+  const handleWizardComplete = (itemName) => {
+    setWizardOpen(false);
+    
+    // Refresh app data to get the newly created item
+    fetch('/api/all-data')
+      .then(response => response.json())
+      .then(data => {
+        setAppData(data);
+        
+        // Now add the item to the list
+        const currentItemList = data.itemList || [];
+        const newList = [...currentItemList, itemName];
+        updateServerItemList(newList);
+        setAppData(prev => ({ ...prev, itemList: newList }));
+        
+        setNewItem('');
+        setSuggestions([]);
+      })
+      .catch(error => setError(error.message));
+  };
+
+  const handleWizardCancel = () => {
+    setWizardOpen(false);
+    setWizardItemName('');
+    setNewItem('');
+    setSuggestions([]);
   };
 
   const handleDeleteItem = (indexToDelete) => {
@@ -158,6 +193,17 @@ function ListPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {wizardOpen && appData && (
+        <AddItemWizard
+          itemName={wizardItemName}
+          itemTypes={appData.itemTypesList || []}
+          shopTypes={appData.shopTypes || []}
+          shopTypeToItemTypes={appData.shopTypeToItemTypes || {}}
+          onComplete={handleWizardComplete}
+          onCancel={handleWizardCancel}
+        />
       )}
     </div>
   );
