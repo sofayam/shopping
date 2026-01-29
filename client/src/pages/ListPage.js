@@ -158,7 +158,7 @@ function ListPage() {
           type="text"
           value={newItem}
           onChange={handleInputChange}
-          placeholder="Add an item from the data model"
+          placeholder="Add an item to the list"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck="false"
@@ -211,13 +211,15 @@ function ListPage() {
       {error && <p>Error: {error}</p>}
       
       {appData && ( // Render only when appData is loaded
-        <ul>
+        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
           {itemListToDisplay.map((item, index) => (
-            <li key={index}>
-              {item}
-              <button onClick={() => handleDeleteItem(index)} style={{ marginLeft: '10px' }}>
-                Delete
-              </button>
+            <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
+              <span style={{ fontSize: '1.05rem', flex: 1 }}>{item}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px', flexShrink: 0 }}>
+                <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

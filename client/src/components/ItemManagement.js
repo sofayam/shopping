@@ -7,6 +7,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
   const [isEditing, setIsEditing] = useState(false);
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [nicknameInput, setNicknameInput] = useState('');
+  const [sortBy, setSortBy] = useState('name'); // 'name' or 'type'
 
   if (!items || !shops || !itemTypes || !shopTypeToItemTypes) { // Check for shopTypeToItemTypes prop
     return <p>Loading item data...</p>;
@@ -130,9 +131,60 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
       })
     : [];
 
+  // Sort items based on current sort mode
+  const getSortedItems = () => {
+    const itemsCopy = [...items];
+    if (sortBy === 'name') {
+      return itemsCopy.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'type') {
+      return itemsCopy.sort((a, b) => {
+        const typeCompare = a.item_type.localeCompare(b.item_type);
+        if (typeCompare !== 0) return typeCompare;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    return itemsCopy;
+  };
+
+  const sortedItems = getSortedItems();
+
   return (
     <section>
       <h3>Items</h3>
+      
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ marginRight: '15px' }}>Sort by:</label>
+        <button 
+          onClick={() => setSortBy('name')}
+          style={{ 
+            marginRight: '10px',
+            fontWeight: sortBy === 'name' ? 'bold' : 'normal',
+            backgroundColor: sortBy === 'name' ? '#4CAF50' : '#f0f0f0',
+            color: sortBy === 'name' ? 'white' : 'black',
+            padding: '8px 16px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Name
+        </button>
+        <button 
+          onClick={() => setSortBy('type')}
+          style={{ 
+            fontWeight: sortBy === 'type' ? 'bold' : 'normal',
+            backgroundColor: sortBy === 'type' ? '#4CAF50' : '#f0f0f0',
+            color: sortBy === 'type' ? 'white' : 'black',
+            padding: '8px 16px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Item Type (then Name)
+        </button>
+      </div>
+
       <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
@@ -145,7 +197,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
           </tr>
         </thead>
         <tbody>
-          {items.map(item => (
+          {sortedItems.map(item => (
             <tr key={item.name}>
               <td>{item.name}</td>
               <td>{item.item_type}</td>

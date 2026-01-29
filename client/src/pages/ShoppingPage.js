@@ -175,12 +175,12 @@ function ShoppingPage() {
                       }
                       
                       return (
-                        <li key={item.name} style={{ textDecoration: tickedItems[item.name] ? 'line-through' : 'none' }}>
-                          <label>
+                        <li key={item.name} style={{ textDecoration: tickedItems[item.name] ? 'line-through' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '10px', marginBottom: '10px', borderBottom: '1px solid #eee', gap: '12px', flexWrap: 'nowrap' }}>
+                          <label style={{ flex: 1 }}>
                             <input type="checkbox" name={item.name} checked={tickedItems[item.name] || false} onChange={handleTickChange} />
                             {item.name} {preferenceIndicator && <span style={{ marginLeft: '5px', fontSize: '0.9em' }}>{preferenceIndicator}</span>} <small>({item.item_type})</small>
                           </label>
-                          <button onClick={() => handleDefer(item.name)} style={{ marginLeft: '10px', fontSize: '0.8em' }}>Defer</button>
+                          <button onClick={() => handleDefer(item.name)} style={{ marginLeft: '0', fontSize: '0.8em', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}>Defer</button>
                         </li>
                       );
                     })}
