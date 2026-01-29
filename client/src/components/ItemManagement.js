@@ -172,7 +172,10 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
             placeholder="Item Name"
             value={formState.name}
             onChange={handleFormChange}
-            disabled={isEditing} // Prevent changing name on edit to preserve key
+            disabled={isEditing}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
           {!isEditing && nameSuggestions.length > 0 && (
             <ul style={{ listStyleType: 'none', padding: 0, margin: '0', border: '1px solid #ccc', maxHeight: '150px', overflowY: 'auto', background: 'white', position: 'absolute', zIndex: 100, width: '100%' }}>
@@ -212,6 +215,9 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
               onChange={(e) => setNicknameInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNickname())}
               placeholder="Add a nickname"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             <button type="button" onClick={handleAddNickname} style={{ marginLeft: '5px' }}>
               Add Nickname

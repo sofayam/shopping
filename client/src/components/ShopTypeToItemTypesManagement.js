@@ -183,6 +183,9 @@ function ShopTypeToItemTypesManagement({ shopTypeToItemTypes, shopTypes, itemTyp
               value={currentItemType}
               onChange={handleItemTypeInputChange}
               style={{ width: 'calc(100% - 70px)' }}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             <button type="button" onClick={handleAddItemType} style={{ width: '60px', marginLeft: '5px' }}>Add</button>
             {itemTypeSuggestions.length > 0 && (

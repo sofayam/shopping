@@ -40,6 +40,9 @@ function ItemTypeManagement({ itemTypes, onUpdate }) {
           value={newItemType}
           onChange={(e) => setNewItemType(e.target.value)}
           placeholder="New item type"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
         />
         <button type="submit">Add Item Type</button>
       </form>

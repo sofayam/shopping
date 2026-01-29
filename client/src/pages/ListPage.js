@@ -153,15 +153,43 @@ function ListPage() {
       <h1>Item List Management</h1>
       <p>This is the master list of all items you currently need.</p>
       
-      <form onSubmit={handleAddItem}>
+      <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         <input
           type="text"
           value={newItem}
-          onChange={handleInputChange} // Use new handler for input change
+          onChange={handleInputChange}
           placeholder="Add an item from the data model"
-          // list="item-suggestions" // Can be used for native browser autocomplete, but we're building custom
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
+          style={{
+            flex: 1,
+            padding: '16px',
+            fontSize: '18px',
+            border: '2px solid #ccc',
+            borderRadius: '4px',
+            minHeight: '44px',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+          }}
         />
-        <button type="submit">Add Item</button>
+        <button 
+          type="submit"
+          style={{
+            padding: '16px 24px',
+            fontSize: '18px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            minHeight: '44px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Add Item
+        </button>
         {suggestions.length > 0 && (
           <ul style={{ listStyleType: 'none', padding: 0, margin: '5px 0', border: '1px solid #ccc', maxHeight: '150px', overflowY: 'auto', background: 'white', position: 'absolute', zIndex: 100 }}>
             {suggestions.map((suggestion, index) => (

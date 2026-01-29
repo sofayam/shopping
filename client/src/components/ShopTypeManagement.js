@@ -42,6 +42,9 @@ function ShopTypeManagement({ shopTypes, onUpdate }) {
           value={newShopType}
           onChange={(e) => setNewShopType(e.target.value)}
           placeholder="New shop type"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
         />
         <button type="submit">Add Shop Type</button>
       </form>

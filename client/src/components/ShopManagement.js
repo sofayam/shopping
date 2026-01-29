@@ -190,6 +190,9 @@ function ShopManagement({ shops, shopTypes, itemTypes, shopTypeToItemTypes, onUp
             value={formState.name}
             onChange={handleFormChange}
             disabled={isEditing}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
           {!isEditing && nameSuggestions.length > 0 && (
             <ul style={{ listStyleType: 'none', padding: 0, margin: '0', border: '1px solid #ccc', maxHeight: '150px', overflowY: 'auto', background: 'white', position: 'absolute', zIndex: 100, width: '100%' }}>
@@ -221,6 +224,9 @@ function ShopManagement({ shops, shopTypes, itemTypes, shopTypeToItemTypes, onUp
               value={currentAisleItem}
               onChange={handleAisleItemInputChange}
               style={{ width: 'calc(100% - 70px)' }}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             <button type="button" onClick={handleAddAisleItem} style={{ width: '60px', marginLeft: '5px' }}>Add</button>
             {aisleItemSuggestions.length > 0 && (
