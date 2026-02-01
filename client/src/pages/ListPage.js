@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import AddItemWizard from '../components/AddItemWizard';
+import { useNavigate } from 'react-router-dom';
 
 function ListPage() {
+  const navigate = useNavigate();
   const [appData, setAppData] = useState(null); // New state for all data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newItem, setNewItem] = useState('');
   const [suggestions, setSuggestions] = useState([]); // New state for autocomplete suggestions
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardItemName, setWizardItemName] = useState('');
 
   // Fetch all data
   useEffect(() => {
@@ -95,9 +94,8 @@ function ListPage() {
     const itemExistsInModel = appData.items.some(item => item.name === newItem.trim());
     
     if (!itemExistsInModel) {
-      // Item doesn't exist, open wizard to create it
-      setWizardItemName(newItem.trim());
-      setWizardOpen(true);
+      // Item doesn't exist, navigate to the creation page
+      navigate(`/add-item/${newItem.trim()}`);
       return;
     }
 
@@ -107,34 +105,6 @@ function ListPage() {
     updateServerItemList(newList); // Update server
     setNewItem('');
     setSuggestions([]); // Clear suggestions after adding
-  };
-
-  const handleWizardComplete = (itemName) => {
-    setWizardOpen(false);
-    
-    // Refresh app data to get the newly created item
-    fetch('/api/all-data')
-      .then(response => response.json())
-      .then(data => {
-        setAppData(data);
-        
-        // Now add the item to the list
-        const currentItemList = data.itemList || [];
-        const newList = [...currentItemList, itemName];
-        updateServerItemList(newList);
-        setAppData(prev => ({ ...prev, itemList: newList }));
-        
-        setNewItem('');
-        setSuggestions([]);
-      })
-      .catch(error => setError(error.message));
-  };
-
-  const handleWizardCancel = () => {
-    setWizardOpen(false);
-    setWizardItemName('');
-    setNewItem('');
-    setSuggestions([]);
   };
 
   const handleDeleteItem = (indexToDelete) => {
@@ -223,17 +193,6 @@ function ListPage() {
             </li>
           ))}
         </ul>
-      )}
-
-      {wizardOpen && appData && (
-        <AddItemWizard
-          itemName={wizardItemName}
-          itemTypes={appData.itemTypesList || []}
-          shopTypes={appData.shopTypes || []}
-          shopTypeToItemTypes={appData.shopTypeToItemTypes || {}}
-          onComplete={handleWizardComplete}
-          onCancel={handleWizardCancel}
-        />
       )}
     </div>
   );

@@ -1,26 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
-function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, onComplete, onCancel }) {
+function AddItemPage() {
+  const { itemName } = useParams();
+  const navigate = useNavigate();
+
+  const [itemTypes, setItemTypes] = useState([]);
+  const [shopTypes, setShopTypes] = useState([]);
+  const [shopTypeToItemTypes, setShopTypeToItemTypes] = useState({});
+  
   const [typeInput, setTypeInput] = useState('');
   const [typeSuggestions, setTypeSuggestions] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [selectedShopTypes, setSelectedShopTypes] = useState([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const viewport = document.querySelector('meta[name="viewport"]');
-    const originalContent = viewport?.getAttribute('content');
-    
-    if (viewport) {
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-    }
-    
-    return () => {
-      if (viewport && originalContent) {
-        viewport.setAttribute('content', originalContent);
-      }
-    };
+    fetch('/api/all-data')
+      .then(res => res.json())
+      .then(data => {
+        setItemTypes(data.itemTypesList || []);
+        setShopTypes(data.shopTypes || []);
+        setShopTypeToItemTypes(data.shopTypeToItemTypes || {});
+        setLoading(false);
+
+        // DEBUG: Show what's being loaded for autocomplete.
+        const types = data.itemTypesList || [];
+        const normalized = Array.isArray(types) ? types.map(it => typeof it === 'string' ? it : it.name).sort() : [];
+        setError(`Debug Info: Autocomplete is using these types: ${JSON.stringify(normalized)}`);
+      })
+      .catch(err => {
+        setError(`Failed to load data: ${err.message}`);
+        setLoading(false);
+      });
   }, []);
 
   const normalizedItemTypes = Array.isArray(itemTypes) 
@@ -77,7 +90,13 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
         return;
       }
 
-      if (!selectedType && normalizedItemTypes.includes(itemTypeToUse)) {
+      // Re-fetch all data right before validation and writing to have the freshest data
+      const allDataRes = await fetch('/api/all-data');
+      const allData = await allDataRes.json();
+      const currentItems = allData.items || [];
+      const currentItemTypes = allData.itemTypesList || [];
+
+      if (!selectedType && currentItemTypes.map(it => it.toLowerCase()).includes(itemTypeToUse.toLowerCase())) {
         setError('That item type already exists.');
         setLoading(false);
         return;
@@ -91,10 +110,6 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
         nicknames: []
       };
 
-      const itemsRes = await fetch('/api/all-data');
-      const allData = await itemsRes.json();
-      const currentItems = allData.items || [];
-
       const updatedItems = [...currentItems, newItem];
       await fetch('/api/data/items.yaml', {
         method: 'POST',
@@ -103,7 +118,7 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
       });
 
       if (!selectedType && typeInput.trim()) {
-        const updatedItemTypes = [...normalizedItemTypes, typeInput.trim()];
+        const updatedItemTypes = [...currentItemTypes, typeInput.trim()];
         await fetch('/api/data/item_types.yaml', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -111,8 +126,7 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
         });
 
         if (selectedShopTypes.length > 0) {
-          const currentShopTypeMap = allData.shopTypeToItemTypes || {};
-          const updatedShopTypeMap = { ...currentShopTypeMap };
+          const updatedShopTypeMap = { ...(allData.shopTypeToItemTypes || {}) };
 
           selectedShopTypes.forEach(shopType => {
             const existingList = updatedShopTypeMap[shopType] || [];
@@ -130,8 +144,17 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
         }
       }
 
+      // Finally, add the new item to the main shopping list
+      const currentItemList = allData.itemList || [];
+      const newList = [...currentItemList, itemName];
+      await fetch('/api/item-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newList),
+      });
+
       setLoading(false);
-      onComplete(itemName);
+      navigate('/');
     } catch (err) {
       setError(`Failed to create item: ${err.message}`);
       setLoading(false);
@@ -142,139 +165,120 @@ function AddItemWizard({ itemName, itemTypes, shopTypes, shopTypeToItemTypes, on
     e.preventDefault();
     await validateAndSubmit();
   };
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <h2 style={styles.title}>Add New Item: {itemName}</h2>
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {error && <p style={styles.error}>{error}</p>}
+    <div style={styles.container}>
+      <h2 style={styles.title}>Add New Item: {itemName}</h2>
+      
+      <form onSubmit={handleSubmit} style={styles.form}>
+        {error && <p style={styles.error}>{error}</p>}
 
-          <div style={styles.section}>
-            <p style={{...styles.label, marginBottom: '15px', fontSize: '1.1rem'}}>
-              What type of item is this?
-            </p>
-            
-            {selectedType ? (
-              <div style={styles.selectedTypeBox}>
-                <span style={{fontSize: '1.1rem', fontWeight: '500'}}>{selectedType}</span>
-                <button
-                  type="button"
-                  onClick={handleRemoveSelectedType}
-                  style={styles.removeButton}
-                >
-                  ✕ Change
-                </button>
-              </div>
-            ) : (
-              <div style={{position: 'relative'}}>
-                <input
-                  type="text"
-                  value={typeInput}
-                  onChange={handleTypeInputChange}
-                  placeholder="Search or type a new type..."
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  style={styles.input}
-                  autoFocus
-                />
-                
-                {typeSuggestions.length > 0 && (
-                  <div style={styles.suggestionsBox}>
-                    {typeSuggestions.map(suggestion => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => handleSelectSuggestion(suggestion)}
-                        style={styles.suggestionItem}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {typeInput && !selectedType && (
-              <div style={{marginTop: '20px'}}>
-                <p style={styles.label}>
-                  Which shops sell this type? (optional)
-                </p>
-                <div style={styles.checkboxGroup}>
-                  {shopTypes.map(shopType => (
-                    <label key={shopType} style={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={selectedShopTypes.includes(shopType)}
-                        onChange={() => handleShopTypeToggle(shopType)}
-                        style={styles.checkboxInput}
-                      />
-                      {shopType}
-                    </label>
+        <div style={styles.section}>
+          <p style={{...styles.label, marginBottom: '15px', fontSize: '1.1rem'}}>
+            What type of item is this?
+          </p>
+          
+          {selectedType ? (
+            <div style={styles.selectedTypeBox}>
+              <span style={{fontSize: '1.1rem', fontWeight: '500'}}>{selectedType}</span>
+              <button
+                type="button"
+                onClick={handleRemoveSelectedType}
+                style={styles.removeButton}
+              >
+                ✕ Change
+              </button>
+            </div>
+          ) : (
+            <div style={{position: 'relative'}}>
+              <input
+                type="text"
+                value={typeInput}
+                onChange={handleTypeInputChange}
+                placeholder="Search or type a new type..."
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck="false"
+                style={styles.input}
+                autoFocus
+              />
+              
+              {typeSuggestions.length > 0 && (
+                <div style={styles.suggestionsBox}>
+                  {typeSuggestions.map(suggestion => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                      style={styles.suggestionItem}
+                    >
+                      {suggestion}
+                    </button>
                   ))}
                 </div>
+              )}
+            </div>
+          )}
+
+          {typeInput && !selectedType && (
+            <div style={{marginTop: '20px'}}>
+              <p style={styles.label}>
+                Which shops sell this type? (optional)
+              </p>
+              <div style={styles.checkboxGroup}>
+                {shopTypes.map(shopType => (
+                  <label key={shopType} style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={selectedShopTypes.includes(shopType)}
+                      onChange={() => handleShopTypeToggle(shopType)}
+                      style={styles.checkboxInput}
+                    />
+                    {shopType}
+                  </label>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            <p style={styles.note}>
-              You can edit more details (nicknames, preferences) later in the Management section.
-            </p>
-          </div>
+          <p style={styles.note}>
+            You can edit more details (nicknames, preferences) later in the Management section.
+          </p>
+        </div>
 
-          <div style={styles.buttonGroup}>
-            <button
-              type="button"
-              onClick={onCancel}
-              style={styles.cancelButton}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={styles.primaryButton}
-              disabled={loading || (!selectedType && !typeInput.trim())}
-            >
-              {loading ? 'Creating...' : 'Create Item'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div style={styles.buttonGroup}>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            style={styles.cancelButton}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={styles.primaryButton}
+            disabled={loading || (!selectedType && !typeInput.trim())}
+          >
+            {loading ? 'Creating...' : 'Create Item'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
 
 const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    zIndex: 2000,
-    width: '100vw',
-    height: '100vh',
-    overflow: 'hidden',
-  },
-  modal: {
-    backgroundColor: 'white',
-    borderRadius: '8px 8px 0 0',
+  container: {
     padding: '20px',
-    width: '100%',
-    maxWidth: '100vw',
-    maxHeight: '85vh',
-    overflowY: 'auto',
-    boxShadow: '0 -4px 6px rgba(0, 0, 0, 0.1)',
-    WebkitOverflowScrolling: 'touch',
+    maxWidth: '600px',
+    margin: '0 auto',
   },
   title: {
-    fontSize: '1.25rem',
+    fontSize: '1.5rem',
     marginBottom: '20px',
     color: '#333',
   },
@@ -287,6 +291,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
+    padding: '20px',
+    backgroundColor: '#f9f9f9',
+    borderRadius: '8px',
+    border: '1px solid #eee'
   },
   label: {
     fontSize: '1rem',
@@ -351,7 +359,7 @@ const styles = {
     flexDirection: 'column',
     gap: '12px',
     padding: '15px',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
     borderRadius: '4px',
     border: '1px solid #e0e0e0',
     marginBottom: '15px',
@@ -377,8 +385,9 @@ const styles = {
     color: '#666',
     fontStyle: 'italic',
     padding: '10px',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0f0f0',
     borderRadius: '4px',
+    textAlign: 'center',
   },
   error: {
     color: '#d32f2f',
@@ -420,4 +429,4 @@ const styles = {
   },
 };
 
-export default AddItemWizard;
+export default AddItemPage;

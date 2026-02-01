@@ -9,12 +9,13 @@ import ShopTypeToItemTypesPage from './pages/ShopTypeToItemTypesPage';
 import ItemsPage from './pages/ItemsPage';
 import ShopsPage from './pages/ShopsPage';
 import ValidationPage from './pages/ValidationPage';
+import AddItemPage from './pages/AddItemPage';
 import './App.css';
 
 function App() {
   const [validationStatus, setValidationStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  
   useEffect(() => {
     // Check validation status on startup
     fetch('/api/validation-status')
@@ -64,6 +65,7 @@ function App() {
           {/* Redirect to validation if issues found on startup */}
           <Route path="/" element={shouldShowValidationRequired ? <Navigate to="/validation" /> : <ListPage />} />
           <Route path="/shopping" element={shouldShowValidationRequired ? <Navigate to="/validation" /> : <ShoppingPage />} />
+          <Route path="/add-item/:itemName" element={shouldShowValidationRequired ? <Navigate to="/validation" /> : <AddItemPage />} />
           
           <Route path="/validation" element={<ValidationPage onValidationStatusChange={setValidationStatus} />} />
           
