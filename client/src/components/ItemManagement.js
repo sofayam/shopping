@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '', only_shop: '', nicknames: [] };
 

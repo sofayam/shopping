@@ -7,7 +7,6 @@ function AddItemPage() {
 
   const [itemTypes, setItemTypes] = useState([]);
   const [shopTypes, setShopTypes] = useState([]);
-  const [shopTypeToItemTypes, setShopTypeToItemTypes] = useState({});
   
   const [typeInput, setTypeInput] = useState('');
   const [typeSuggestions, setTypeSuggestions] = useState([]);
@@ -22,13 +21,7 @@ function AddItemPage() {
       .then(data => {
         setItemTypes(data.itemTypesList || []);
         setShopTypes(data.shopTypes || []);
-        setShopTypeToItemTypes(data.shopTypeToItemTypes || {});
         setLoading(false);
-
-        // DEBUG: Show what's being loaded for autocomplete.
-        const types = data.itemTypesList || [];
-        const normalized = Array.isArray(types) ? types.map(it => typeof it === 'string' ? it : it.name).sort() : [];
-        setError(`Debug Info: Autocomplete is using these types: ${JSON.stringify(normalized)}`);
       })
       .catch(err => {
         setError(`Failed to load data: ${err.message}`);

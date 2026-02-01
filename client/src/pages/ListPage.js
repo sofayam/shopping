@@ -9,24 +9,26 @@ function ListPage() {
   const [newItem, setNewItem] = useState('');
   const [suggestions, setSuggestions] = useState([]); // New state for autocomplete suggestions
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/all-data');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setAppData(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch all data
   useEffect(() => {
-    fetch('/api/all-data') // Fetch all data
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setAppData(data); // Store all data
-        setLoading(false);
-      })
-      .catch(error => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
+    fetchData();
+  }, []); // Empty dependency array means this runs once on mount
 
   // Function to update the item list on the server
   const updateServerItemList = (newList) => { // Renamed for clarity
@@ -45,6 +47,38 @@ function ListPage() {
     .catch(error => {
       setError(error.message);
     });
+  };
+
+  const handleUndefer = async (itemName) => {
+    try {
+      // Fetch the latest items data to avoid race conditions
+      const allDataRes = await fetch('/api/all-data');
+      const allData = await allDataRes.json();
+      const currentItems = allData.items || [];
+
+      // Find the item and remove the is_deferred property
+      const updatedItems = currentItems.map(item => {
+        if (item.name === itemName) {
+          const newItem = { ...item };
+          delete newItem.is_deferred;
+          return newItem;
+        }
+        return item;
+      });
+
+      // Persist the change to the server
+      await fetch('/api/data/items.yaml', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItems),
+      });
+
+      // Re-fetch all data to ensure the UI is fully consistent with the server
+      fetchData(); // Call the existing fetchData to refresh appData
+
+    } catch (err) {
+      setError(`Failed to undefer item: ${err.message}`);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -116,7 +150,12 @@ function ListPage() {
     updateServerItemList(newList); // Update server
   };
 
-  const itemListToDisplay = appData ? (appData.itemList || []) : []; // Get itemList from appData
+  const allAppItems = appData ? appData.items || [] : [];
+  const deferredItems = allAppItems.filter(item => item.is_deferred);
+  const activeItemList = appData ? (appData.itemList || []).filter(itemName => {
+    const item = allAppItems.find(i => i.name === itemName);
+    return item && !item.is_deferred;
+  }) : [];
 
   return (
     <div>
@@ -181,18 +220,37 @@ function ListPage() {
       {error && <p>Error: {error}</p>}
       
       {appData && ( // Render only when appData is loaded
-        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-          {itemListToDisplay.map((item, index) => (
-            <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
-              <span style={{ fontSize: '1.05rem', flex: 1 }}>{item}</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px', flexShrink: 0 }}>
-                <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+            {activeItemList.map((item, index) => (
+              <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
+                <span style={{ fontSize: '1.05rem', flex: 1 }}>{item}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px', flexShrink: 0 }}>
+                  <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {deferredItems.length > 0 && (
+            <div style={{ marginTop: '30px' }}>
+              <h2>Deferred Items</h2>
+              <p>These items are currently deferred and can be rescheduled:</p>
+              <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                {deferredItems.map(item => (
+                  <li key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
+                    <span style={{ fontSize: '1.05rem', flex: 1 }}>{item.name} <small>({item.item_type})</small></span>
+                    <button onClick={() => handleUndefer(item.name)} style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                      Undefer
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

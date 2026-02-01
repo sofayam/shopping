@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 function ValidationPage({ onValidationStatusChange }) {
   const [validationResult, setValidationResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchValidation = () => {
+  const fetchValidation = useCallback(() => {
     setLoading(true);
     setError(null);
     fetch('/api/validate')
@@ -27,11 +27,11 @@ function ValidationPage({ onValidationStatusChange }) {
         setError(error.message);
         setLoading(false);
       });
-  };
+  }, [setLoading, setError, setValidationResult, onValidationStatusChange]);
 
   useEffect(() => {
     fetchValidation();
-  }, []);
+  }, [fetchValidation]);
 
   const handleReload = () => {
     fetchValidation();

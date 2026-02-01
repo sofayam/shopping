@@ -43,7 +43,7 @@ function ShoppingPage() {
 
     const neededItemNames = appData.itemList || [];
     const allItems = appData.items || [];
-    const neededItems = allItems.filter(item => neededItemNames.includes(item.name));
+    const neededItems = allItems.filter(item => neededItemNames.includes(item.name) && !item.is_deferred);
     const activeShopNames = Object.keys(selectedShops).filter(shopName => selectedShops[shopName]);
     const activeShops = appData.shops.filter(shop => activeShopNames.includes(shop.name));
     const shopTypeToItemTypesMap = appData.shopTypeToItemTypes || {};
@@ -126,11 +126,38 @@ function ShoppingPage() {
     setTickedItems(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleDefer = (itemName) => {
-    setAppData(prev => ({
-      ...prev,
-      itemList: prev.itemList.filter(it => it !== itemName),
-    }));
+  const handleDefer = async (itemName) => {
+    try {
+      // Fetch the latest items data to avoid race conditions
+      const allDataRes = await fetch('/api/all-data');
+      const allData = await allDataRes.json();
+      const currentItems = allData.items || [];
+
+      // Find the item and mark it as deferred
+      const updatedItems = currentItems.map(item => {
+        if (item.name === itemName) {
+          return { ...item, is_deferred: true };
+        }
+        return item;
+      });
+
+      // Persist the change to the server
+      await fetch('/api/data/items.yaml', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItems),
+      });
+
+      // Re-fetch all data to ensure the UI is fully consistent with the server
+      // This will cause the purchaseList to recalculate and exclude the deferred item
+      await fetch('/api/all-data')
+        .then(response => response.json())
+        .then(data => setAppData(data))
+        .catch(err => setError(err.message));
+
+    } catch (err) {
+      setError(`Failed to defer item: ${err.message}`);
+    }
   };
 
   const handlePurge = () => {
