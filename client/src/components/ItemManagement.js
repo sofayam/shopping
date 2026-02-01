@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const BLANK_ITEM = { name: '', item_type: '', preferred_shop: '', only_shop: '', nicknames: [] };
 
@@ -8,6 +8,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [nicknameInput, setNicknameInput] = useState('');
   const [sortBy, setSortBy] = useState('name'); // 'name' or 'type'
+  const editFormRef = useRef(null);
 
   if (!items || !shops || !itemTypes || !shopTypeToItemTypes) { // Check for shopTypeToItemTypes prop
     return <p>Loading item data...</p>;
@@ -36,6 +37,10 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
     setIsEditing(true);
     setFormState(item);
     setNameSuggestions([]); // Clear suggestions when editing
+
+    setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handleCancel = () => {
@@ -201,9 +206,9 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
             <tr key={item.name}>
               <td>{item.name}</td>
               <td>{item.item_type}</td>
-              <td>{item.nicknames && item.nicknames.length > 0 ? item.nicknames.join(', ') : 'None'}</td>
-              <td>{item.preferred_shop || 'None'}</td>
-              <td>{item.only_shop || 'None'}</td>
+              <td>{item.nicknames && item.nicknames.length > 0 ? item.nicknames.join(', ') : '-'}</td>
+              <td>{item.preferred_shop || '-'}</td>
+              <td>{item.only_shop || '-'}</td>
               <td>
                 <button onClick={() => handleEditClick(item)}>Edit</button>
                 <button onClick={() => handleDelete(item.name)}>Delete</button>
@@ -215,7 +220,7 @@ function ItemManagement({ items, shops, itemTypes, shopTypeToItemTypes, onUpdate
 
       <hr />
 
-      <h4>{isEditing ? 'Edit Item' : 'Add New Item'}</h4>
+      <h4 ref={editFormRef}>{isEditing ? 'Edit Item' : 'Add New Item'}</h4>
       <form onSubmit={handleSubmit}>
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <input
