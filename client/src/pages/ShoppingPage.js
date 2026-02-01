@@ -7,7 +7,7 @@ function ShoppingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch all application data
+  // Fetch all application data and initialize selectedShops
   useEffect(() => {
     fetch('/api/all-data')
       .then(response => {
@@ -18,10 +18,36 @@ function ShoppingPage() {
       })
       .then(data => {
         setAppData(data);
-        const initialShopSelection = data.shops.reduce((acc, shop) => {
-          acc[shop.name] = false;
-          return acc;
-        }, {});
+        const allShopNames = data.shops.map(shop => shop.name);
+        
+        // Try to load from sessionStorage
+        const savedSelection = sessionStorage.getItem('shoppingPageSelectedShops');
+        let initialShopSelection = {};
+
+        if (savedSelection) {
+          try {
+            const parsedSavedSelection = JSON.parse(savedSelection);
+            // Filter out shops that no longer exist and add new ones as unselected
+            initialShopSelection = allShopNames.reduce((acc, shopName) => {
+              acc[shopName] = parsedSavedSelection[shopName] || false;
+              return acc;
+            }, {});
+          } catch (e) {
+            console.error("Failed to parse saved shop selection from sessionStorage", e);
+            // Fallback to default if parsing fails
+            initialShopSelection = allShopNames.reduce((acc, shopName) => {
+              acc[shopName] = false;
+              return acc;
+            }, {});
+          }
+        } else {
+          // If nothing in sessionStorage, initialize all to false
+          initialShopSelection = allShopNames.reduce((acc, shopName) => {
+            acc[shopName] = false;
+            return acc;
+          }, {});
+        }
+        
         setSelectedShops(initialShopSelection);
         setLoading(false);
       })
@@ -29,8 +55,17 @@ function ShoppingPage() {
         setError(error.message);
         setLoading(false);
       });
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
+  // Effect to save selectedShops to sessionStorage whenever it changes
+  useEffect(() => {
+    // Only save once appData is loaded and shops are initialized to prevent overwriting
+    // valid saved state with an empty initial state before appData is ready.
+    if (appData && Object.keys(selectedShops).length > 0) { 
+      sessionStorage.setItem('shoppingPageSelectedShops', JSON.stringify(selectedShops));
+    }
+  }, [selectedShops, appData]);
+  
   const handleShopSelection = (event) => {
     const { name, checked } = event.target;
     setSelectedShops(prev => ({ ...prev, [name]: checked }));
