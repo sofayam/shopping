@@ -206,19 +206,19 @@ function ShoppingPage() {
 
   return (
     <div>
-      <h1>Shopping Trip</h1>
+
       {loading && <p>Loading data...</p>}
       {error && <p>Error: {error}</p>}
       {appData && (
         <div>
-          <h2>1. Choose shop or shops to visit</h2>
+       
           {appData.shops.map(shop => (
             <div key={shop.name}>
               <label><input type="checkbox" name={shop.name} checked={selectedShops[shop.name] || false} onChange={handleShopSelection} /> {shop.name} ({shop.shop_type})</label>
             </div>
           ))}
           <hr />
-          <h2>2. Your Purchase List</h2>
+       
           {purchaseList.allocated.length > 0 ? (
             <>
               {purchaseList.allocated.map(shopData => (
@@ -259,7 +259,7 @@ function ShoppingPage() {
             <>
               <hr />
               <h2>3. Unallocated Items</h2>
-              <p>These items could not be allocated to your selected shops:</p>
+         
               <ul>
                 {purchaseList.unallocated.map(item => {
                   // Determine suggested shop

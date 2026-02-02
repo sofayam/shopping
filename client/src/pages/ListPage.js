@@ -189,10 +189,9 @@ function ListPage() {
 
   return (
     <div>
-      <h1>Item List Management</h1>
-      <p>This is the master list of all items you currently need.</p>
+
       
-      <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
         <input
           type="text"
           value={newItem}
@@ -203,11 +202,11 @@ function ListPage() {
           spellCheck="false"
           style={{
             flex: 1,
-            padding: '16px',
-            fontSize: '18px',
+            padding: '12px',
+            fontSize: '16px',
             border: '2px solid #ccc',
             borderRadius: '4px',
-            minHeight: '44px',
+            minHeight: '40px',
             WebkitAppearance: 'none',
             appearance: 'none',
           }}
@@ -215,15 +214,15 @@ function ListPage() {
         <button 
           type="submit"
           style={{
-            padding: '16px 24px',
-            fontSize: '18px',
+            padding: '12px 18px',
+            fontSize: '16px',
             backgroundColor: '#4CAF50',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
             fontWeight: 'bold',
-            minHeight: '44px',
+            minHeight: '40px',
             whiteSpace: 'nowrap',
           }}
         >
@@ -257,13 +256,13 @@ function ListPage() {
               if (!item) return null; // Should not happen if filtering is correct
 
               return (
-                <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
+                <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '10px', flexWrap: 'nowrap' }}>
                   <span style={{ fontSize: '1.05rem', flex: 1 }}>{item.name} <small>({item.item_type})</small></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '100px', flexShrink: 0 }}>
-                    <button onClick={() => handleDefer(item.name)} style={{ padding: '8px 16px', backgroundColor: '#ffc107', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexShrink: 0 }}>
+                    <button onClick={() => handleDefer(item.name)} style={{ padding: '8px 12px', backgroundColor: '#ffc107', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Defer
                     </button>
-                    <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                    <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 12px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Delete
                     </button>
                   </div>
@@ -274,15 +273,17 @@ function ListPage() {
 
           {deferredItems.length > 0 && (
             <div style={{ marginTop: '30px' }}>
-              <h2>Deferred Items</h2>
-              <p>These items are currently deferred and can be rescheduled:</p>
+              <h3>Deferred Items</h3>
+
               <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
                 {deferredItems.map(item => (
-                  <li key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '16px', flexWrap: 'nowrap' }}>
+                  <li key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '10px', flexWrap: 'nowrap' }}>
                     <span style={{ fontSize: '1.05rem', flex: 1 }}>{item.name} <small>({item.item_type})</small></span>
-                    <button onClick={() => handleUndefer(item.name)} style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', flexShrink: 0 }}>
+                    <button onClick={() => handleUndefer(item.name)} style={{ padding: '8px 12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Undefer
                     </button>
+                  </div>
                   </li>
                 ))}
               </ul>
