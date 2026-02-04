@@ -9,52 +9,51 @@ function ShoppingPage() {
 
   // Fetch all application data and initialize selectedShops
   useEffect(() => {
-    fetch('/api/all-data')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setAppData(data);
-        const allShopNames = data.shops.map(shop => shop.name);
-        
-        // Try to load from sessionStorage
-        const savedSelection = sessionStorage.getItem('shoppingPageSelectedShops');
-        let initialShopSelection = {};
+    Promise.all([
+      fetch('/api/all-data').then(res => res.ok ? res.json() : Promise.reject(new Error('Network response was not ok for all-data'))),
+      fetch('/api/ticked-items').then(res => res.ok ? res.json() : Promise.reject(new Error('Network response was not ok for ticked-items')))
+    ])
+    .then(([data, tickedData]) => {
+      setAppData(data);
+      setTickedItems(tickedData); // Load ticked items from server
 
-        if (savedSelection) {
-          try {
-            const parsedSavedSelection = JSON.parse(savedSelection);
-            // Filter out shops that no longer exist and add new ones as unselected
-            initialShopSelection = allShopNames.reduce((acc, shopName) => {
-              acc[shopName] = parsedSavedSelection[shopName] || false;
-              return acc;
-            }, {});
-          } catch (e) {
-            console.error("Failed to parse saved shop selection from sessionStorage", e);
-            // Fallback to default if parsing fails
-            initialShopSelection = allShopNames.reduce((acc, shopName) => {
-              acc[shopName] = false;
-              return acc;
-            }, {});
-          }
-        } else {
-          // If nothing in sessionStorage, initialize all to false
+      const allShopNames = data.shops.map(shop => shop.name);
+      
+      // Try to load from sessionStorage
+      const savedSelection = sessionStorage.getItem('shoppingPageSelectedShops');
+      let initialShopSelection = {};
+
+      if (savedSelection) {
+        try {
+          const parsedSavedSelection = JSON.parse(savedSelection);
+          // Filter out shops that no longer exist and add new ones as unselected
+          initialShopSelection = allShopNames.reduce((acc, shopName) => {
+            acc[shopName] = parsedSavedSelection[shopName] || false;
+            return acc;
+          }, {});
+        } catch (e) {
+          console.error("Failed to parse saved shop selection from sessionStorage", e);
+          // Fallback to default if parsing fails
           initialShopSelection = allShopNames.reduce((acc, shopName) => {
             acc[shopName] = false;
             return acc;
           }, {});
         }
-        
-        setSelectedShops(initialShopSelection);
-        setLoading(false);
-      })
-      .catch(error => {
-        setError(error.message);
-        setLoading(false);
-      });
+      } else {
+        // If nothing in sessionStorage, initialize all to false
+        initialShopSelection = allShopNames.reduce((acc, shopName) => {
+          acc[shopName] = false;
+          return acc;
+        }, {});
+      }
+      
+      setSelectedShops(initialShopSelection);
+      setLoading(false);
+    })
+    .catch(error => {
+      setError(error.message);
+      setLoading(false);
+    });
   }, []); // Empty dependency array means this runs once on mount
 
   // Effect to save selectedShops to sessionStorage whenever it changes
@@ -158,7 +157,24 @@ function ShoppingPage() {
 
   const handleTickChange = (event) => {
     const { name, checked } = event.target;
-    setTickedItems(prev => ({ ...prev, [name]: checked }));
+    
+    setTickedItems(prev => {
+      const newTickedItems = { ...prev, [name]: checked };
+
+      // Persist the new state to the server
+      fetch('/api/ticked-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTickedItems),
+      }).catch(error => {
+        // If the server update fails, log it and potentially revert the state
+        console.error('Failed to update ticked items on server:', error);
+        setError('Failed to save ticked status. Please try again.');
+        // To revert, we would need to refetch from the server or manage state more carefully
+      });
+
+      return newTickedItems;
+    });
   };
 
   const handleDefer = async (itemName) => {
