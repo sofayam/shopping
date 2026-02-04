@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 
 const dataDir = path.join(__dirname, '../data_persistence');
 const BACKUP_DIR = path.join(__dirname, '../data_backups'); // New constant
+const PURCHASE_HISTORY_FILE = 'purchase_history.yaml'; // New constant
 
 // Ensure backup directory exists
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -141,6 +142,26 @@ const writeYaml = (fileName, data) => {
   fs.writeFileSync(path.join(dataDir, fileName), yamlStr, 'utf8');
 };
 
+// --- Purchase History Reading/Writing ---
+const readPurchaseHistory = () => {
+  try {
+    const fileContents = fs.readFileSync(path.join(dataDir, PURCHASE_HISTORY_FILE), 'utf8');
+    const data = yaml.load(fileContents);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    if (e.code === 'ENOENT') { // File not found
+      return [];
+    }
+    console.error(`Error reading ${PURCHASE_HISTORY_FILE}:`, e);
+    return [];
+  }
+};
+
+const writePurchaseHistory = (data) => {
+  const yamlStr = yaml.dump(data);
+  fs.writeFileSync(path.join(dataDir, PURCHASE_HISTORY_FILE), yamlStr, 'utf8');
+};
+
 // Helper function to extract names from an array of objects or strings
 const extractNames = (arr) => {
   if (!Array.isArray(arr)) return [];
@@ -155,7 +176,8 @@ const EDITABLE_FILES = [
   'item_types.yaml',
   'shop_type_to_item_types.yaml', // Renamed from item_type_to_shop_type.yaml
   // 'preferred_shops_by_item_type.yaml', // Removed as per user's request
-  'item_list.yaml'
+  'item_list.yaml',
+  PURCHASE_HISTORY_FILE // Add purchase_history.yaml to editable files
 ];
 
 // --- Validation Logic ---
@@ -637,13 +659,36 @@ app.get('/api/item-list', (req, res) => {
 });
 
 app.post('/api/item-list', (req, res) => {
+  const { itemsToKeep, purgedItems, selectedShops } = req.body;
+
+  if (!Array.isArray(itemsToKeep) || !Array.isArray(purgedItems) || typeof selectedShops !== 'object') {
+    return res.status(400).send({ message: 'Invalid payload for item list update. Expected itemsToKeep, purgedItems, and selectedShops.' });
+  }
+
   try {
-    writeYaml('item_list.yaml', req.body);
-    tickedItemsCache = {}; // Clear cache on purge
-    res.status(200).send({ message: 'Item list updated successfully.' });
+    // 1. Update item_list.yaml with items to keep
+    writeYaml('item_list.yaml', itemsToKeep);
+
+    // 2. Archive purged items to purchase_history.yaml
+    if (purgedItems.length > 0) {
+      const history = readPurchaseHistory();
+      const selectedShopNames = Object.keys(selectedShops).filter(shopName => selectedShops[shopName]);
+      const newHistoryEntry = {
+        timestamp: new Date().toISOString(),
+        purgedItems: purgedItems,
+        selectedShops: selectedShopNames, // Changed to list of selected shop names
+      };
+      history.push(newHistoryEntry);
+      writePurchaseHistory(history);
+    }
+
+    // 3. Clear ticked items cache
+    tickedItemsCache = {};
+
+    res.status(200).send({ message: 'Item list updated and purged items archived successfully.' });
   } catch (e) {
-    console.error('Error writing item_list.yaml:', e);
-    res.status(500).send({ message: 'Failed to update item list.' });
+    console.error('Error updating item_list.yaml or archiving purged items:', e);
+    res.status(500).send({ message: 'Failed to update item list or archive purged items.' });
   }
 });
 
