@@ -32,7 +32,7 @@ function ListPage() {
 
   // Function to update the item list on the server
   const updateServerItemList = (newList) => { // Renamed for clarity
-    fetch('/api/item-list', {
+    fetch('/api/data/item_list.yaml', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

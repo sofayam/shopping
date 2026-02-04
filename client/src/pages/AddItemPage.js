@@ -140,7 +140,7 @@ function AddItemPage() {
       // Finally, add the new item to the main shopping list
       const currentItemList = allData.itemList || [];
       const newList = [...currentItemList, itemName];
-      await fetch('/api/item-list', {
+      await fetch('/api/data/item_list.yaml', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newList),
