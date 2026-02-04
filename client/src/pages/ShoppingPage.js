@@ -147,11 +147,11 @@ function ShoppingPage() {
     return { allocated: finalList, unallocated: unallocatedItems }; // Return both
   }, [appData, selectedShops]);
 
-  const updateServerList = (newList) => {
+  const updateServerList = (payload) => { // Now accepts a payload object
     fetch('/api/item-list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newList),
+      body: JSON.stringify(payload), // Send the entire payload
     }).catch(error => setError(error.message));
   };
 
@@ -213,7 +213,9 @@ function ShoppingPage() {
 
   const handlePurge = () => {
     const itemsToKeep = appData.itemList.filter(item => !tickedItems[item]);
-    updateServerList(itemsToKeep);
+    const purgedItems = appData.itemList.filter(item => tickedItems[item]); // Items that were ticked
+    
+    updateServerList({ itemsToKeep, purgedItems, selectedShops }); // Pass all necessary data
     setAppData(prev => ({ ...prev, itemList: itemsToKeep }));
     setTickedItems({});
   };
