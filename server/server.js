@@ -7,6 +7,9 @@ const path = require('path');
 const app = express();
 const port = 3001; // Server will now serve both frontend and backend on this port
 
+// In-memory cache for ticked items
+let tickedItemsCache = {};
+
 // app.use(cors()); // Removed
 app.use(express.json({ limit: '10mb' }));
 
@@ -14,6 +17,95 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../client/build')));
 
 const dataDir = path.join(__dirname, '../data_persistence');
+const BACKUP_DIR = path.join(__dirname, '../data_backups'); // New constant
+
+// Ensure backup directory exists
+if (!fs.existsSync(BACKUP_DIR)) {
+  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+}
+
+// Function to create a timestamped backup of data_persistence
+const createBackup = () => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = path.join(BACKUP_DIR, `backup-${timestamp}`);
+  fs.mkdirSync(backupPath, { recursive: true });
+
+  fs.readdirSync(dataDir).forEach(file => {
+    const src = path.join(dataDir, file);
+    const dest = path.join(backupPath, file);
+    fs.copyFileSync(src, dest);
+  });
+  console.log(`[Server] Created backup: ${backupPath}`);
+  return backupPath;
+};
+
+// Function to restore the latest backup
+const restoreLatestBackup = () => {
+  const backups = fs.readdirSync(BACKUP_DIR)
+    .filter(name => name.startsWith('backup-'))
+    .sort()
+    .reverse(); // Latest backup first
+
+  if (backups.length === 0) {
+    throw new Error('No backups found to restore.');
+  }
+
+  const latestBackupPath = path.join(BACKUP_DIR, backups[0]);
+
+  // Clear current data_persistence
+  fs.readdirSync(dataDir).forEach(file => {
+    fs.unlinkSync(path.join(dataDir, file));
+  });
+
+  // Copy files from latest backup to data_persistence
+  fs.readdirSync(latestBackupPath).forEach(file => {
+    const src = path.join(latestBackupPath, file);
+    const dest = path.join(dataDir, file);
+    fs.copyFileSync(src, dest);
+  });
+  console.log(`[Server] Restored from backup: ${latestBackupPath}`);
+  return latestBackupPath;
+};
+
+// Helper function to recursively replace identifiers in a data structure
+const replaceIdentifierInYamlData = (data, oldIdentifier, newIdentifier, isPreview = false) => {
+  let replacementsCount = 0;
+  const lowerOldIdentifier = oldIdentifier.toLowerCase();
+
+  const traverseAndReplace = (currentData, key = null) => {
+    if (typeof currentData === 'string') {
+      // Check if the string itself is the oldIdentifier (case-insensitive match)
+      if (currentData.toLowerCase() === lowerOldIdentifier) {
+        replacementsCount++;
+        return isPreview ? currentData : newIdentifier;
+      }
+      return currentData;
+    } else if (Array.isArray(currentData)) {
+      // If it's an array, iterate over its elements
+      return currentData.map(item => traverseAndReplace(item));
+    } else if (typeof currentData === 'object' && currentData !== null) {
+      const newObject = {};
+      for (const prop in currentData) {
+        if (Object.prototype.hasOwnProperty.call(currentData, prop)) {
+          let newProp = prop;
+          // Check if the property name itself is the oldIdentifier (case-insensitive match)
+          if (prop.toLowerCase() === lowerOldIdentifier) {
+            replacementsCount++;
+            newProp = isPreview ? prop : newIdentifier;
+          }
+          // Recursively process the value
+          newObject[newProp] = traverseAndReplace(currentData[prop], prop);
+        }
+      }
+      return newObject;
+    }
+    return currentData;
+  };
+
+  const result = traverseAndReplace(data);
+  return { data: result, replacementsCount };
+};
+
 
 // --- Validation State ---
 let lastValidationResult = null;
@@ -47,6 +139,12 @@ const readYaml = (fileName) => {
 const writeYaml = (fileName, data) => {
   const yamlStr = yaml.dump(data);
   fs.writeFileSync(path.join(dataDir, fileName), yamlStr, 'utf8');
+};
+
+// Helper function to extract names from an array of objects or strings
+const extractNames = (arr) => {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(entry => typeof entry === 'string' ? entry : entry.name).filter(Boolean);
 };
 
 // Whitelist of files that can be modified via the API
@@ -306,6 +404,157 @@ const performValidation = () => {
 
 // --- API Endpoints ---
 
+// Ticked items endpoints
+app.get('/api/ticked-items', (req, res) => {
+  res.json(tickedItemsCache);
+});
+
+app.post('/api/ticked-items', (req, res) => {
+  tickedItemsCache = req.body || {};
+  res.status(200).send({ message: 'Ticked items updated successfully.' });
+});
+
+// All identifiers endpoint
+app.get('/api/all-identifiers', (req, res) => {
+  try {
+    const identifiers = new Set();
+
+    // Read all relevant YAML files
+    const items = readYaml('items.yaml');
+    const shops = readYaml('shops.yaml');
+    const itemTypes = readYaml('item_types.yaml');
+    const shopTypes = readYaml('shop_types.yaml');
+    const itemList = readYaml('item_list.yaml');
+    const shopTypeToItemTypes = readYaml('shop_type_to_item_types.yaml');
+
+    // Extract item names and nicknames
+    items.forEach(item => {
+      if (item.name) identifiers.add(item.name);
+      if (Array.isArray(item.nicknames)) {
+        item.nicknames.forEach(nick => identifiers.add(nick));
+      }
+    });
+
+    // Extract shop names
+    shops.forEach(shop => {
+      if (shop.name) identifiers.add(shop.name);
+    });
+
+    // Extract item type names
+    extractNames(itemTypes).forEach(name => identifiers.add(name));
+
+    // Extract shop type names
+    extractNames(shopTypes).forEach(name => identifiers.add(name));
+
+    // Extract item names from item_list
+    itemList.forEach(itemName => identifiers.add(itemName));
+
+    // Extract shop types and item types from shop_type_to_item_types (keys and values)
+    Object.keys(shopTypeToItemTypes).forEach(shopType => identifiers.add(shopType));
+    Object.values(shopTypeToItemTypes).forEach(itemTypesList => {
+      if (Array.isArray(itemTypesList)) {
+        itemTypesList.forEach(itemType => identifiers.add(itemType));
+      }
+    });
+
+    const sortedIdentifiers = Array.from(identifiers).sort();
+    res.json(sortedIdentifiers);
+
+  } catch (e) {
+    console.error('Error fetching all identifiers:', e);
+    res.status(500).send({ message: 'Failed to fetch all identifiers.' });
+  }
+});
+
+// Backup and Rollback Endpoints
+app.post('/api/create-backup', (req, res) => {
+  try {
+    const backupPath = createBackup();
+    res.status(200).send({ message: `Backup created at ${backupPath}` });
+  } catch (e) {
+    console.error('Error creating backup:', e);
+    res.status(500).send({ message: `Failed to create backup: ${e.message}` });
+  }
+});
+
+app.post('/api/rollback-backup', (req, res) => {
+  try {
+    const restoredPath = restoreLatestBackup();
+    // Re-run validation after restore
+    performValidation();
+    res.status(200).send({ message: `Restored from backup ${restoredPath}` });
+  } catch (e) {
+    console.error('Error restoring backup:', e);
+    res.status(500).send({ message: `Failed to restore backup: ${e.message}` });
+  }
+});
+
+// Global Replace Endpoints
+app.post('/api/global-replace-preview', (req, res) => {
+  const { oldIdentifier, newIdentifier } = req.body;
+
+  if (!oldIdentifier || !newIdentifier) {
+    return res.status(400).send({ message: 'Both oldIdentifier and newIdentifier are required.' });
+  }
+
+  const previewResults = {};
+  let totalOccurrences = 0;
+
+  EDITABLE_FILES.forEach(fileName => {
+    try {
+      const fileContent = readYaml(fileName);
+      const { replacementsCount } = replaceIdentifierInYamlData(fileContent, oldIdentifier, newIdentifier, true); // isPreview = true
+      if (replacementsCount > 0) {
+        previewResults[fileName] = replacementsCount;
+        totalOccurrences += replacementsCount;
+      }
+    } catch (e) {
+      console.error(`Error during preview for ${fileName}:`, e);
+      // Continue to next file, but maybe log an error for the user
+    }
+  });
+
+  res.status(200).json({ previewResults, totalOccurrences });
+});
+
+app.post('/api/global-replace', (req, res) => {
+  const { oldIdentifier, newIdentifier } = req.body;
+
+  if (!oldIdentifier || !newIdentifier) {
+    return res.status(400).send({ message: 'Both oldIdentifier and newIdentifier are required.' });
+  }
+
+  try {
+    // 1. Create backup
+    createBackup();
+
+    // 2. Perform replacements
+    const replacedFiles = {};
+    EDITABLE_FILES.forEach(fileName => {
+      const fileContent = readYaml(fileName);
+      const { data: newContent, replacementsCount } = replaceIdentifierInYamlData(fileContent, oldIdentifier, newIdentifier, false); // isPreview = false
+      if (replacementsCount > 0) {
+        writeYaml(fileName, newContent);
+        replacedFiles[fileName] = replacementsCount;
+      }
+    });
+
+    // 3. Re-run validation
+    const validationResult = performValidation();
+
+    res.status(200).json({
+      message: 'Global replacement completed.',
+      replacedFiles,
+      validationResult
+    });
+
+  } catch (e) {
+    console.error('Error during global replacement:', e);
+    res.status(500).send({ message: `Global replacement failed: ${e.message}` });
+  }
+});
+
+
 // Validation endpoint - returns current validation status and can trigger re-validation
 app.get('/api/validate', (req, res) => {
   const result = performValidation();
@@ -390,6 +639,7 @@ app.get('/api/item-list', (req, res) => {
 app.post('/api/item-list', (req, res) => {
   try {
     writeYaml('item_list.yaml', req.body);
+    tickedItemsCache = {}; // Clear cache on purge
     res.status(200).send({ message: 'Item list updated successfully.' });
   } catch (e) {
     console.error('Error writing item_list.yaml:', e);

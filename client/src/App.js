@@ -10,6 +10,7 @@ import ItemsPage from './pages/ItemsPage';
 import ShopsPage from './pages/ShopsPage';
 import ValidationPage from './pages/ValidationPage';
 import AddItemPage from './pages/AddItemPage';
+import GlobalReplaceForm from './components/GlobalReplaceForm'; // Import the new component
 import './App.css';
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
             <Route path="shop-type-to-item-types" element={<ShopTypeToItemTypesPage />} />
             <Route path="items" element={<ItemsPage />} />
             <Route path="shops" element={<ShopsPage />} />
+            <Route path="edit" element={<GlobalReplaceForm />} /> {/* New route for global replace */}
           </Route>
         </Routes>
       </div>

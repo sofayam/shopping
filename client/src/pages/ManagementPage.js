@@ -12,6 +12,7 @@ function ManagementPage() {
           <li><Link to="shop-type-to-item-types">Shop Type to Item Types</Link></li>
           <li><Link to="items">Items</Link></li>
           <li><Link to="shops">Shops</Link></li>
+          <li><Link to="edit">Edit</Link></li>
         </ul>
       </nav>
       <hr />
