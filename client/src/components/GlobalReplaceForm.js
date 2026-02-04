@@ -34,14 +34,24 @@ function GlobalReplaceForm() {
       setError('Both "Old Identifier" and "New Identifier" fields are required.');
       return false;
     }
+    // Allow changing casing: oldIdentifier and newIdentifier can be the same if their casing differs
     if (oldIdentifier === newIdentifier) {
-      setError('"Old Identifier" and "New Identifier" cannot be the same.');
+      setError('"Old Identifier" and "New Identifier" cannot be exactly the same (case-sensitive).');
       return false;
     }
-    if (allIdentifiers.some(id => id.toLowerCase() === newIdentifier.toLowerCase())) {
-      setError(`"${newIdentifier}" already exists as an identifier. Please choose a unique new identifier.`);
+
+    // Check if newIdentifier (case-insensitively) conflicts with any *other* existing identifier
+    // It should be allowed if newIdentifier is just a case-variant of oldIdentifier
+    const conflictExists = allIdentifiers.some(id => 
+      id.toLowerCase() === newIdentifier.toLowerCase() && // newIdentifier matches an existing ID (case-insensitively)
+      id.toLowerCase() !== oldIdentifier.toLowerCase()    // AND that existing ID is NOT the oldIdentifier (case-insensitively)
+    );
+
+    if (conflictExists) {
+      setError(`"${newIdentifier}" (case-insensitively) conflicts with another existing identifier. Please choose a unique new identifier.`);
       return false;
     }
+    
     setError('');
     return true;
   };
