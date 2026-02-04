@@ -115,23 +115,41 @@ let lastValidationResult = null;
 
 const readYaml = (fileName) => {
   try {
-    const fileContents = fs.readFileSync(path.join(dataDir, fileName), 'utf8');
-    const data = yaml.load(fileContents);
-    // Return empty array for lists, empty object for mappings if data is null
-    if (data === null) {
-      if (fileName === 'what_is_where.yaml') {
+    const filePath = path.join(dataDir, fileName);
+    if (!fs.existsSync(filePath)) { // Check if file exists before trying to read
+      // Return appropriate empty structure for non-existent files
+      if (fileName === 'shop_type_to_item_types.yaml') { // This is a map
         return {};
       }
-      return []; // Default to empty array for other list-like files
+      return []; // Most other files are lists
+    }
+
+    const fileContents = fs.readFileSync(filePath, 'utf8');
+    const data = yaml.load(fileContents);
+
+    // Handle empty or null YAML content
+    if (data === null || typeof data === 'undefined') {
+      if (fileName === 'shop_type_to_item_types.yaml') {
+        return {};
+      }
+      return [];
     }
     return data;
   } catch (e) {
-    console.error(`Error reading ${fileName}:`, e);
-    // If file doesn't exist or is unreadable, return appropriate empty structure
-    if (fileName === 'what_is_where.yaml') {
-      return {};
+    // Log a warning for file not found, error for other issues
+    if (e.code === 'ENOENT') {
+      console.warn(`[Server] YAML file not found: ${fileName}. Returning empty structure.`);
+      if (fileName === 'shop_type_to_item_types.yaml') {
+        return {};
+      }
+      return [];
+    } else {
+      console.error(`[Server] Error reading ${fileName}:`, e);
+      if (fileName === 'shop_type_to_item_types.yaml') {
+        return {};
+      }
+      return [];
     }
-    return [];
   }
 };
 
