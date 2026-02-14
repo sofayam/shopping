@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import EditItemWizard from '../components/EditItemWizard';
 
 function ListPage() {
   const navigate = useNavigate();
@@ -8,6 +9,7 @@ function ListPage() {
   const [error, setError] = useState(null);
   const [newItem, setNewItem] = useState('');
   const [suggestions, setSuggestions] = useState([]); // New state for autocomplete suggestions
+  const [editingItem, setEditingItem] = useState(null); // State for the item being edited
 
   const fetchData = async () => {
     setLoading(true);
@@ -180,6 +182,19 @@ function ListPage() {
     updateServerItemList(newList); // Update server
   };
 
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+  };
+
+  const handleCloseWizard = () => {
+    setEditingItem(null);
+  };
+
+  const handleSaveWizard = () => {
+    setEditingItem(null);
+    fetchData(); // Re-fetch all data to show the updates
+  };
+
   const allAppItems = appData ? appData.items || [] : [];
   const deferredItems = allAppItems.filter(item => item.is_deferred);
   const activeItemList = appData ? (appData.itemList || []).filter(itemName => {
@@ -189,8 +204,6 @@ function ListPage() {
 
   return (
     <div>
-
-      
       <form onSubmit={handleAddItem} style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
         <input
           type="text"
@@ -259,6 +272,9 @@ function ListPage() {
                 <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid #eee', marginBottom: '0', gap: '10px', flexWrap: 'nowrap' }}>
                   <span style={{ fontSize: '1.05rem', flex: 1 }}>{item.name} <small>({item.item_type})</small></span>
                   <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexShrink: 0 }}>
+                    <button onClick={() => handleEditItem(item)} style={{ padding: '8px 12px', backgroundColor: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
+                      Edit
+                    </button>
                     <button onClick={() => handleDefer(item.name)} style={{ padding: '8px 12px', backgroundColor: '#ffc107', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Defer
                     </button>
@@ -290,6 +306,14 @@ function ListPage() {
             </div>
           )}
         </>
+      )}
+      {editingItem && (
+        <EditItemWizard
+          item={editingItem}
+          appData={appData}
+          onSave={handleSaveWizard}
+          onCancel={handleCloseWizard}
+        />
       )}
     </div>
   );
