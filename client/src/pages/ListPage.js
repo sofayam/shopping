@@ -53,30 +53,52 @@ function ListPage() {
 
   const handleUndefer = async (itemName) => {
     try {
-      // Fetch the latest items data to avoid race conditions
+      // Fetch the latest data to avoid race conditions
       const allDataRes = await fetch('/api/all-data');
+      if (!allDataRes.ok) throw new Error('Failed to fetch latest data.');
       const allData = await allDataRes.json();
+      
       const currentItems = allData.items || [];
+      const currentItemList = allData.itemList || [];
 
-      // Find the item and remove the is_deferred property
+      // 1. Update the item's deferred status in the master item list
       const updatedItems = currentItems.map(item => {
         if (item.name === itemName) {
-          const newItem = { ...item };
-          delete newItem.is_deferred;
-          return newItem;
+          const { is_deferred, ...rest } = item; // Remove the is_deferred property
+          return rest;
         }
         return item;
       });
 
-      // Persist the change to the server
-      await fetch('/api/data/items.yaml', {
+      // 2. Ensure the item is in the active shopping list
+      const updatedItemList = [...currentItemList];
+      if (!updatedItemList.includes(itemName)) {
+        updatedItemList.push(itemName);
+      }
+
+      // Persist both changes to the server in parallel
+      const itemsUpdate = fetch('/api/data/items.yaml', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedItems),
       });
 
-      // Re-fetch all data to ensure the UI is fully consistent with the server
-      fetchData(); // Call the existing fetchData to refresh appData
+      const itemListUpdate = fetch('/api/data/item_list.yaml', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItemList),
+      });
+
+      const responses = await Promise.all([itemsUpdate, itemListUpdate]);
+
+      for (const response of responses) {
+        if (!response.ok) {
+          throw new Error('One or more updates failed on the server.');
+        }
+      }
+
+      // Re-fetch all data to ensure the UI is fully consistent
+      fetchData();
 
     } catch (err) {
       setError(`Failed to undefer item: ${err.message}`);
