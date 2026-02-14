@@ -1,0 +1,53 @@
+- timestamp: '2026-02-06T14:01:48.293Z'
+  purgedItems:
+    - barbecue sauce
+    - milk
+    - whipped cream
+    - courgette
+    - yoghurt drink
+    - ice cream
+    - chocolate
+    - choc mousse
+    - carrots
+    - paprika
+    - biscuits
+    - waffles
+    - portugal news
+    - runner beans
+  selectedShops:
+    - intermarche
+- timestamp: '2026-02-12T15:08:37.454Z'
+  purgedItems:
+    - soap
+    - toothpaste
+    - mango yoghurt
+    - gerkins
+    - yoghurt drink
+    - stracciatella yoghurt
+    - biscuits
+    - paprika
+    - butter
+    - feta
+    - sundried tomatoes
+    - tuna steak
+    - salmon steak
+  selectedShops:
+    - aldi
+- timestamp: '2026-02-13T18:26:02.364Z'
+  purgedItems:
+    - shower curtain
+    - shower rod
+  selectedShops:
+    - leroy merlin
+- timestamp: '2026-02-14T10:24:49.825Z'
+  purgedItems:
+    - bulgur
+    - tomato pulp
+    - washing up liquid
+    - penne
+    - flakes
+    - yoghurt drink
+    - biscuits
+    - coriander
+  selectedShops:
+    - intermarche

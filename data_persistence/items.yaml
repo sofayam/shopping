@@ -52,9 +52,6 @@
 - name: socks
   item_type: clothes
   preferred_shop: ''
-- name: boots
-  item_type: shoes
-  preferred_shop: ''
 - name: olive oil
   item_type: oil
   preferred_shop: ''
@@ -66,14 +63,15 @@
   preferred_shop: ''
 - name: peanut oil
   item_type: oil
-  preferred_shop: aldi
+  preferred_shop: ''
+  only_shop: aldi
 - name: soy sauce
   item_type: condiment
   preferred_shop: ''
 - name: teriyaki sauce
   item_type: condiment
   preferred_shop: ''
-  only_shop: continente
+  only_shop: intermarche
 - name: tinned tuna
   item_type: tins
   preferred_shop: ''
@@ -94,6 +92,260 @@
     - seife
 - name: deo
   item_type: toiletries
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: toalhitas
+  item_type: household
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: prawns
+  item_type: frozen
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: chicken
+  item_type: meat
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: allspice
+  item_type: condiment
+  preferred_shop: ''
+  only_shop: apolonia
+  nicknames: []
+  is_deferred: true
+- name: fishing line
+  item_type: sports equipment
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: flour
+  item_type: basics
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: chocolate
+  item_type: confectionary
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: heets
+  item_type: tobacco
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: cream
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: baking paper
+  item_type: household
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: ground beef
+  item_type: meat
+  preferred_shop: ''
+  only_shop: ''
+  nicknames:
+    - hack
+- name: bin liners
+  item_type: household
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: cinnamon
+  item_type: condiment
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: barbecue sauce
+  item_type: condiment
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: apple juice
+  item_type: juice
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: earl grey
+  item_type: tea
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: toast bread
+  item_type: bakery
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: avocado
+  item_type: fresh veg
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: yoghurt drink
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: biscuits
+  item_type: biscuits
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: butter
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: sugar
+  item_type: basics
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: tomato
+  item_type: fresh veg
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: mushrooms
+  item_type: fresh veg
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: milk
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: whipped cream
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: courgette
+  item_type: fresh veg
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: ice cream
+  item_type: frozen
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: peas
+  item_type: frozen
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: choc mousse
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: carrots
+  item_type: fresh veg
+  preferred_shop: aldi
+  only_shop: ''
+  nicknames: []
+- name: waffles
+  item_type: biscuits
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: portugal news
+  item_type: paper
+  preferred_shop: ''
+  only_shop: intermarche
+  nicknames: []
+  is_deferred: true
+- name: runner beans
+  item_type: fresh veg
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: toothpaste
+  item_type: toiletries
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: mango yoghurt
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: bulgur
+  item_type: dry goods
+  preferred_shop: ''
+  only_shop: intermarche
+  nicknames: []
+- name: tomato pulp
+  item_type: condiment
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: gerkins
+  item_type: conserves
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: stracciatella yoghurt
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: feta
+  item_type: dairy
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: sundried tomatoes
+  item_type: condiment
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: cod loin
+  item_type: fish
+  preferred_shop: ''
+  only_shop: intermarche
+  nicknames: []
+  is_deferred: true
+- name: tuna steak
+  item_type: fish
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: salmon steak
+  item_type: fish
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: washing up liquid
+  item_type: household
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: shower curtain
+  item_type: furnishings
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: shower rod
+  item_type: furnishings
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: flakes
+  item_type: cereal
+  preferred_shop: ''
+  only_shop: ''
+  nicknames: []
+- name: coriander
+  item_type: fresh veg
   preferred_shop: ''
   only_shop: ''
   nicknames: []

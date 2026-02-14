@@ -10,8 +10,22 @@ supermarket:
   - tins
   - toiletries
   - condiment
-sportswear:
+  - household
+  - frozen
+  - basics
+  - confectionary
+  - tobacco
+  - dairy
+  - juice
+  - tea
+  - paper
+  - conserves
+  - fish
+  - cereal
+sports:
   - clothes
   - shoes
+  - sports equipment
 diy:
   - tools
+  - furnishings

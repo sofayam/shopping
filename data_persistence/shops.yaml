@@ -1,15 +1,41 @@
 - name: aldi
   shop_type: supermarket
-  aisle_order: []
+  aisle_order:
+    - fresh veg
+    - basics
+    - tea
+    - juice
+    - dairy
+    - condiment
+    - household
+    - frozen
+    - bakery
+    - biscuits
 - name: intermarche
   shop_type: supermarket
-  aisle_order: []
-- name: Leroy Merlin
+  aisle_order:
+    - fresh veg
+    - bakery
+    - meat
+    - dairy
+    - cereal
+    - confectionary
+    - condiment
+    - biscuits
+    - frozen
+    - paper
+- name: leroy merlin
   shop_type: diy
   aisle_order: []
-- name: Decathlon
-  shop_type: sportswear
+- name: 'decathlon '
+  shop_type: sports
   aisle_order: []
 - name: continente
+  shop_type: supermarket
+  aisle_order: []
+- name: apolonia
+  shop_type: supermarket
+  aisle_order: []
+- name: lidl
   shop_type: supermarket
   aisle_order: []
