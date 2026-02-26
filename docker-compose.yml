@@ -1,9 +1,11 @@
+
 services:
   shopping-app:
+    container_name: shopping
     build:
       context: . # Build from the current directory where Dockerfile is located
       dockerfile: Dockerfile # Specify the Dockerfile name
     ports:
       - "3001:3001" # Map host port 3001 to container port 3001
     volumes:
-      - ./data_persistence:/app/data_persistence # Bind mount to the new data path
+      - /mnt/appdata/shopping/data_persistence:/app/data_persistence # Bind mount to the new data path
