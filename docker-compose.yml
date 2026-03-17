@@ -7,5 +7,6 @@ services:
       dockerfile: Dockerfile # Specify the Dockerfile name
     ports:
       - "3001:3001" # Map host port 3001 to container port 3001
+    restart: unless-stopped
     volumes:
       - /mnt/appdata/shopping/data_persistence:/app/data_persistence # Bind mount to the new data path
