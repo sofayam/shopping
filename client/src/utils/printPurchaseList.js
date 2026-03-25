@@ -266,10 +266,11 @@ export function printPurchaseList(purchaseList, fontKey) {
         if (document.fonts) {
           document.fonts.ready.then(function () {
             fit();
+            window.addEventListener('afterprint', function () { window.close(); });
             setTimeout(function () { window.print(); }, 80);
           });
         } else {
-          setTimeout(function () { fit(); setTimeout(function () { window.print(); }, 80); }, 600);
+          setTimeout(function () { fit(); window.addEventListener('afterprint', function () { window.close(); }); setTimeout(function () { window.print(); }, 80); }, 600);
         }
       }
 
