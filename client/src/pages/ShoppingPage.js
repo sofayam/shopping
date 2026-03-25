@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { printPurchaseList, PRINT_FONTS } from '../utils/printPurchaseList';
 
 function ShoppingPage() {
   const [appData, setAppData] = useState(null);
@@ -6,6 +7,7 @@ function ShoppingPage() {
   const [tickedItems, setTickedItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [printFont, setPrintFont] = useState('sans');
 
   // Fetch all application data and initialize selectedShops
   useEffect(() => {
@@ -239,6 +241,24 @@ function ShoppingPage() {
        
           {purchaseList.allocated.length > 0 ? (
             <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                {Object.entries(PRINT_FONTS).map(([key, font]) => (
+                  <label key={key} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    <input
+                      type="radio"
+                      name="printFont"
+                      value={key}
+                      checked={printFont === key}
+                      onChange={() => setPrintFont(key)}
+                      style={{ marginRight: '4px' }}
+                    />
+                    {font.label}
+                  </label>
+                ))}
+                <button onClick={() => printPurchaseList(purchaseList, printFont)}>
+                  Print
+                </button>
+              </div>
               {purchaseList.allocated.map(shopData => (
                 <div key={shopData.shopName}>
                   <h3>{shopData.shopName}</h3>
