@@ -710,6 +710,54 @@ app.post('/api/item-list', (req, res) => {
   }
 });
 
+// --- Meal Plan Endpoints ---
+
+const MEAL_PLAN_FILE = 'meal_plan.yaml';
+
+const readMealPlan = () => {
+  try {
+    const filePath = path.join(dataDir, MEAL_PLAN_FILE);
+    if (!fs.existsSync(filePath)) return [];
+    const data = yaml.load(fs.readFileSync(filePath, 'utf8'));
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const writeMealPlan = (entries) => {
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  writeYaml(MEAL_PLAN_FILE, sorted);
+  return sorted;
+};
+
+app.get('/api/meal-plan', (req, res) => {
+  res.json(readMealPlan());
+});
+
+app.post('/api/meal-plan', (req, res) => {
+  const { date, meal } = req.body;
+  if (!date || !meal || !meal.trim()) {
+    return res.status(400).json({ message: 'date and meal are required' });
+  }
+  const entries = readMealPlan();
+  const idx = entries.findIndex(e => e.date === date);
+  if (idx >= 0) {
+    entries[idx] = { date, meal: meal.trim() };
+  } else {
+    entries.push({ date, meal: meal.trim() });
+  }
+  const saved = writeMealPlan(entries);
+  res.json(saved);
+});
+
+app.delete('/api/meal-plan/:date', (req, res) => {
+  const { date } = req.params;
+  const entries = readMealPlan().filter(e => e.date !== date);
+  const saved = writeMealPlan(entries);
+  res.json(saved);
+});
+
 // Catch-all for client-side routing - serves the React app's index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));

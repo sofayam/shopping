@@ -10,6 +10,7 @@ import ItemsPage from './pages/ItemsPage';
 import ShopsPage from './pages/ShopsPage';
 import ValidationPage from './pages/ValidationPage';
 import AddItemPage from './pages/AddItemPage';
+import MealPlannerPage from './pages/MealPlannerPage';
 import GlobalReplaceForm from './components/GlobalReplaceForm'; // Import the new component
 import './App.css';
 
@@ -53,6 +54,9 @@ function App() {
               <Link to="/manage">Manage Data</Link>
             </li>
             <li>
+              <Link to="/meals">Meal Planner</Link>
+            </li>
+            <li>
               <Link to="/validation" style={{ color: shouldShowValidationRequired ? 'red' : 'inherit', fontWeight: shouldShowValidationRequired ? 'bold' : 'normal' }}>
                 Validation {shouldShowValidationRequired ? '⚠' : ''}
               </Link>
@@ -68,6 +72,7 @@ function App() {
           <Route path="/shopping" element={shouldShowValidationRequired ? <Navigate to="/validation" /> : <ShoppingPage />} />
           <Route path="/add-item/:itemName" element={shouldShowValidationRequired ? <Navigate to="/validation" /> : <AddItemPage />} />
           
+          <Route path="/meals" element={<MealPlannerPage />} />
           <Route path="/validation" element={<ValidationPage onValidationStatusChange={setValidationStatus} />} />
           
           <Route path="/manage" element={<ManagementPage />}>
