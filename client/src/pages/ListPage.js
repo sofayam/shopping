@@ -195,11 +195,11 @@ function ListPage() {
     setSuggestions([]); // Clear suggestions after adding
   };
 
-  const handleDeleteItem = (indexToDelete) => {
+  const handleDeleteItem = (itemName) => {
     if (!appData || !appData.itemList) return;
 
     const currentItemList = appData.itemList;
-    const newList = currentItemList.filter((_, index) => index !== indexToDelete);
+    const newList = currentItemList.filter(name => name !== itemName);
     setAppData(prev => ({ ...prev, itemList: newList })); // Update local appData
     updateServerItemList(newList); // Update server
   };
@@ -300,7 +300,7 @@ function ListPage() {
                     <button onClick={() => handleDefer(item.name)} style={{ padding: '8px 12px', backgroundColor: '#ffc107', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Defer
                     </button>
-                    <button onClick={() => handleDeleteItem(index)} style={{ padding: '8px 12px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
+                    <button onClick={() => handleDeleteItem(item.name)} style={{ padding: '8px 12px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500', fontSize: '0.85em' }}>
                       Delete
                     </button>
                   </div>
