@@ -61,6 +61,8 @@ function HistoryModal({ meal, dates, onClose }) {
           width: '100%',
           maxHeight: '65vh',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
           boxSizing: 'border-box',
         }}
       >
@@ -93,8 +95,9 @@ function DayRow({
   meal, isActive,
   todayRef, inputRef,
   suggestions, inputValue,
-  onActivate, onDelete, onShowHistory,
+  onActivate, onDelete, onShowHistory, onRandom, onClear,
   onInputChange, onInputKeyDown, onSelectSuggestion, onCancel, onSaveNew,
+  onRandomPick,
 }) {
   const exactMatch = suggestions.some(s => s.toLowerCase() === inputValue.trim().toLowerCase());
 
@@ -121,27 +124,38 @@ function DayRow({
         </span>
 
         {isActive ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={onInputChange}
-            onKeyDown={onInputKeyDown}
-            placeholder="What's for dinner?"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck="false"
-            style={{
-              flex: 1,
-              padding: '9px 11px',
-              fontSize: '16px',
-              border: '2px solid #2196F3',
-              borderRadius: 6,
-              outline: 'none',
-              WebkitAppearance: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={onInputChange}
+              onKeyDown={onInputKeyDown}
+              placeholder="What's for dinner?"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              style={{
+                flex: 1,
+                padding: '9px 11px',
+                fontSize: '16px',
+                border: '2px solid #2196F3',
+                borderRadius: 6,
+                outline: 'none',
+                WebkitAppearance: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            {inputValue && (
+              <button onClick={onClear} aria-label="Clear" style={{
+                background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer',
+                color: '#999', padding: '4px 6px', lineHeight: 1,
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                ✕
+              </button>
+            )}
+          </>
         ) : meal ? (
           <>
             <span
@@ -172,51 +186,48 @@ function DayRow({
             + add meal
           </button>
         )}
+        {!isActive && !meal && onRandom && (
+          <button onClick={onRandom} style={pillBtn('#ff9800')} aria-label="Random meal">🎲</button>
+        )}
       </div>
 
       {isActive && (
         <div style={{ marginLeft: 90, marginTop: 5 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 7 }}>
+            {inputValue.trim() && (
+              <button onClick={onSaveNew} style={pillBtn(exactMatch ? '#5c6bc0' : '#43a047')}>
+                {exactMatch ? 'Save' : `Add "${inputValue.trim()}"`}
+              </button>
+            )}
+            {suggestions.length > 0 && (
+              <button onClick={() => onRandomPick(suggestions[Math.floor(Math.random() * suggestions.length)])} style={pillBtn('#ff9800')}>
+                🎲 Random
+              </button>
+            )}
+            <button onClick={onCancel} style={pillBtn('#9e9e9e')}>
+              Cancel
+            </button>
+          </div>
           {suggestions.length > 0 && (
-            <ul style={{
-              listStyle: 'none', margin: '0 0 7px', padding: 0,
-              border: '1px solid #ddd', borderRadius: 8, background: '#fff',
-              maxHeight: 210, overflowY: 'auto',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.13)',
+            <div style={{
+              border: '1px solid #e0e0e0', borderRadius: 8, background: '#fff',
             }}>
               {suggestions.map(s => (
-                <li
+                <div
                   key={s}
-                  onPointerDown={e => { e.preventDefault(); onSelectSuggestion(s); }}
+                  onClick={() => onSelectSuggestion(s)}
                   style={{
-                    padding: '12px 14px',
-                    fontSize: '1rem',
-                    borderBottom: '1px solid #f5f5f5',
-                    cursor: 'pointer',
-                    userSelect: 'none',
+                    padding: '9px 11px', fontSize: '0.9rem',
+                    borderBottom: '1px solid #f0f0f0',
+                    cursor: 'pointer', color: '#333',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                 >
                   {s}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {inputValue.trim() && !exactMatch && (
-              <button
-                onPointerDown={e => { e.preventDefault(); onSaveNew(); }}
-                style={pillBtn('#43a047')}
-              >
-                Add "{inputValue.trim()}"
-              </button>
-            )}
-            <button
-              onPointerDown={e => { e.preventDefault(); onCancel(); }}
-              style={pillBtn('#9e9e9e')}
-            >
-              Cancel
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -263,13 +274,8 @@ export default function MealPlannerPage() {
 
   const handleActivateDate = (date, currentMeal) => {
     setActiveDate(date);
-    const prefill = currentMeal || '';
-    setInputValue(prefill);
-    if (prefill) {
-      setSuggestions(allMeals.filter(m => m.toLowerCase().includes(prefill.toLowerCase())));
-    } else {
-      setSuggestions(allMeals);
-    }
+    setInputValue(currentMeal || '');
+    setSuggestions(allMeals);
     setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -297,12 +303,33 @@ export default function MealPlannerPage() {
     setActiveDate(null);
   };
 
+  const handleActivateRandom = (date) => {
+    if (allMeals.length === 0) return;
+    setActiveDate(date);
+    const meal = allMeals[Math.floor(Math.random() * allMeals.length)];
+    setInputValue(meal);
+    setSuggestions(allMeals);
+    setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
+  const handleRandomPick = (meal) => {
+    setInputValue(meal);
+    setSuggestions(allMeals);
+    inputRef.current?.focus();
+  };
+
   const handleDelete = async (date) => {
     try {
       const res = await fetch(`/api/meal-plan/${date}`, { method: 'DELETE' });
       const data = await res.json();
       applyEntries(data);
     } catch (e) {}
+  };
+
+  const handleClear = () => {
+    setInputValue('');
+    setSuggestions(allMeals);
+    inputRef.current?.focus();
   };
 
   const handleInputKeyDown = (e) => {
@@ -339,6 +366,9 @@ export default function MealPlannerPage() {
           onActivate={() => handleActivateDate(dateStr, entries[dateStr])}
           onDelete={() => handleDelete(dateStr)}
           onShowHistory={() => handleShowHistory(entries[dateStr])}
+          onRandom={allMeals.length > 0 ? () => handleActivateRandom(dateStr) : null}
+          onRandomPick={handleRandomPick}
+          onClear={handleClear}
           onInputChange={handleInputChange}
           onInputKeyDown={handleInputKeyDown}
           onSelectSuggestion={(meal) => save(activeDate, meal)}
